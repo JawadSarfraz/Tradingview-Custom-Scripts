@@ -1,0 +1,31 @@
+//@version=5
+indicator("Filtered Bullish Fair Value Gaps", overlay=true)
+
+// Inputs
+minFvgSize = input.float(0.5, title="Minimum FVG Size (%)")  // Filters small FVGs
+lookbackVolume = input.int(20, title="Volume Lookback Period")  // Volume confirmation
+volumeMultiplier = input.float(1.25, title="Volume Multiplier for FVG Confirmation")  // High volume condition
+
+// Variables
+var float fvg_high = na
+var float fvg_low = na
+
+// Function: Check if the move was impulsive
+impulseMove(candleSize) =>
+    (high - low) / low * 100 > candleSize  // Ensures strong movement
+
+// Function: Confirm high volume on the breakout
+isHighVolume() =>
+    volume > ta.sma(volume, lookbackVolume) * volumeMultiplier
+
+// Detect Bullish Fair Value Gaps (FVGs)
+if high[2] < low[0]  // Bullish FVG: Candle 1 High < Candle 3 Low
+    fvgSize = ((low[0] - high[2]) / high[2]) * 100  // Calculate FVG size
+    if fvgSize > minFvgSize and isHighVolume()  // Ensure strong FVG
+        fvg_high := high[2]
+        fvg_low := low[0]
+
+// Highlight Only Strong Bullish FVGs
+bgcolor(close >= fvg_low and close <= fvg_high ? color.new(color.blue, 85) : na, title="Bullish FVG Zone")
+plot(fvg_high, color=color.blue, style=plot.style_stepline, title="Bullish FVG High")
+plot(fvg_low, color=color.blue, style=plot.style_stepline, title="Bullish FVG Low")
