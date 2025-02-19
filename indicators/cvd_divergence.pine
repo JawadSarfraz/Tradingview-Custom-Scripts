@@ -1,0 +1,20 @@
+//@version=6
+indicator("CVD-Based Divergences", overlay=true)
+
+// Compute CVD using cumulative volume delta method
+cvd = ta.cum(volume * (close - open))  // Cumulative Volume Delta
+cvd_sma = ta.sma(cvd, 14)  // 14-period SMA for smoothing
+
+// Compute momentum of CVD and price
+cvd_diff = cvd - ta.sma(cvd, 10)  // Change in CVD over 10 periods
+price_diff = close - ta.sma(close, 10)  // Change in price over 10 periods
+
+// Identify Bullish and Bearish Divergences
+bullish_divergence = cvd_diff > 0 and price_diff < 0  // CVD rising, price falling
+bearish_divergence = cvd_diff < 0 and price_diff > 0  // CVD falling, price rising
+
+// Plot Bullish Signal (Green ▲)
+plotshape(series=bullish_divergence, location=location.belowbar, color=color.green, style=shape.labelup, title="Bullish Signal")
+
+// Plot Bearish Signal (Red ▼)
+plotshape(series=bearish_divergence, location=location.abovebar, color=color.red, style=shape.labeldown, title="Bearish Signal")
