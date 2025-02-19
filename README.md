@@ -1,2 +1,3 @@
 # Tradingview-Custom-Scripts
-Custom TradingView Scripts for Technical Analysis &amp; Strategy Development
+A collection of custom TradingView Pine Scripts for technical analysis, market insights, and automated trading signals.
+
