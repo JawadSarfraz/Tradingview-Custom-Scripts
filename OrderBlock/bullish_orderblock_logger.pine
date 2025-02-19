@@ -10,8 +10,11 @@ timeframe_label = input.string("Custom", title="Timeframe Label")  // Manual tim
 isHighVolume() =>
     volume > ta.sma(volume, orderBlockLookback) * minVolumeMultiplier
 
+// ✅ Store the result of isHighVolume() in a global variable
+highVolumeCondition = isHighVolume()
+
 // Detecting Bullish Order Blocks (Down candle before an uptrend)
-bullishOB = (close[2] < open[2]) and (close[1] > high[2]) and isHighVolume()
+bullishOB = (close[2] < open[2]) and (close[1] > high[2]) and highVolumeCondition  // Use stored variable
 
 // Store Bullish OB Data
 var table obTable = table.new(position.top_right, 10, 5)
