@@ -1,13 +1,18 @@
 //@version=6
-indicator("CVD-Based Divergences", overlay=true)
+indicator("CVD-Based Divergences (SMA 50)", overlay=true)
+
+// Define SMA Periods
+cvd_sma_length = 50  // Changed to 50 for long-term trend analysis
+cvd_momentum_length = 20  // Adjusted to 20 for more stable momentum
+price_momentum_length = 20  // Adjusted to 20 for price momentum consistency
 
 // Compute CVD using cumulative volume delta method
 cvd = ta.cum(volume * (close - open))  // Cumulative Volume Delta
-cvd_sma = ta.sma(cvd, 14)  // 14-period SMA for smoothing
+cvd_sma = ta.sma(cvd, cvd_sma_length)  // Apply 50-period SMA for stronger filtering
 
 // Compute momentum of CVD and price
-cvd_diff = cvd - ta.sma(cvd, 10)  // Change in CVD over 10 periods
-price_diff = close - ta.sma(close, 10)  // Change in price over 10 periods
+cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)  // 20-period momentum for CVD
+price_diff = close - ta.sma(close, price_momentum_length)  // 20-period momentum for price
 
 // Identify Bullish and Bearish Divergences
 bullish_divergence = cvd_diff > 0 and price_diff < 0  // CVD rising, price falling
