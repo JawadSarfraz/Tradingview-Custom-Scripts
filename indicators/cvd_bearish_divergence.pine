@@ -1,0 +1,31 @@
+//@version=6
+indicator("CVD-Based Bearish Divergences (SMA 50)", overlay=true)
+
+// Define SMA Periods
+cvd_sma_length = 50  // Stronger trend filtering for bearish conditions
+cvd_momentum_length = 20  // Stable momentum detection
+price_momentum_length = 20  // Keeps price momentum consistent with CVD momentum
+
+// Compute CVD using cumulative volume delta method
+cvd = ta.cum(volume * (close - open))  // Cumulative Volume Delta
+cvd_sma = ta.sma(cvd, cvd_sma_length)  // Apply 50-period SMA for smoothing
+
+// Compute momentum of CVD and price
+cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)  // 20-period momentum for CVD
+price_diff = close - ta.sma(close, price_momentum_length)  // 20-period momentum for price
+
+// Identify Bearish Divergences
+bearish_divergence = cvd_diff < 0 and price_diff > 0  // CVD falling, price rising
+
+// ✅ Fix: Store bearish divergence with proper initialization
+var float isBearishDivergence = 0  // Use 0 instead of `na`
+isBearishDivergence := bearish_divergence ? 1 : 0  // Assign 1 when divergence is detected
+
+// Plot Bearish Signal (Red ▼)
+plotshape(series=isBearishDivergence == 1, location=location.abovebar, color=color.red, style=shape.labeldown, title="Bearish Signal")
+
+// Highlight Bearish Divergence Zone
+bgcolor(isBearishDivergence == 1 ? color.new(color.red, 85) : na, title="Bearish Divergence Zone")
+
+// ✅ Fixed: Alert Condition
+alertcondition(isBearishDivergence == 1, title="Bearish Divergence Detected", message="Bearish Divergence detected! Possible downtrend ahead.")
