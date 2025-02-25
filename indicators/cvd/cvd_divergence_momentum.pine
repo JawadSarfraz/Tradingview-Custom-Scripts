@@ -1,0 +1,45 @@
+//@version=6
+indicator("CVD-Based Divergences with Momentum Strength", overlay=true)
+
+// Define SMA Periods
+cvd_sma_length = 50  // Stronger trend filtering for long-term trends
+cvd_momentum_length = 20  // Momentum measurement for CVD
+price_momentum_length = 20  // Momentum measurement for price
+
+// Compute CVD using cumulative volume delta method
+cvd = ta.cum(volume * (close - open))  // Cumulative Volume Delta
+cvd_sma = ta.sma(cvd, cvd_sma_length)  // Apply 50-period SMA for trend filtering
+
+// Compute momentum of CVD and price
+cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)  // 20-period momentum for CVD
+price_diff = close - ta.sma(close, price_momentum_length)  // 20-period momentum for price
+
+// ✅ Normalize CVD & Price Strength
+cvd_strength = abs(cvd_diff) / ta.sma(abs(cvd_diff), 20)  // CVD momentum relative to avg
+price_strength = abs(price_diff) / ta.sma(abs(price_diff), 20)  // Price momentum relative to avg
+
+// ✅ Identify Bullish and Bearish Divergences
+bullish_divergence = cvd_diff > 0 and price_diff < 0  // CVD rising, price falling
+bearish_divergence = cvd_diff < 0 and price_diff > 0  // CVD falling, price rising
+
+// ✅ Define Strength Levels
+strong_bullish = bullish_divergence and cvd_strength > 1.5 and price_strength > 1.5
+medium_bullish = bullish_divergence and cvd_strength > 1 and price_strength > 1
+weak_bullish = bullish_divergence and cvd_strength < 1 and price_strength < 1
+
+strong_bearish = bearish_divergence and cvd_strength > 1.5 and price_strength > 1.5
+medium_bearish = bearish_divergence and cvd_strength > 1 and price_strength > 1
+weak_bearish = bearish_divergence and cvd_strength < 1 and price_strength < 1
+
+// ✅ Plot Different Colors Based on Strength Levels
+plotshape(series=strong_bullish, location=location.belowbar, color=color.green, style=shape.triangleup, title="Strong Bullish Signal")
+plotshape(series=medium_bullish, location=location.belowbar, color=color.lime, style=shape.triangleup, title="Medium Bullish Signal")
+plotshape(series=weak_bullish, location=location.belowbar, color=color.gray, style=shape.triangleup, title="Weak Bullish Signal")
+
+plotshape(series=strong_bearish, location=location.abovebar, color=color.red, style=shape.triangledown, title="Strong Bearish Signal")
+plotshape(series=medium_bearish, location=location.abovebar, color=color.orange, style=shape.triangledown, title="Medium Bearish Signal")
+plotshape(series=weak_bearish, location=location.abovebar, color=color.gray, style=shape.triangledown, title="Weak Bearish Signal")
+
+// ✅ Alert Conditions for Strong Divergences
+alertcondition(strong_bullish, title="Strong Bullish Divergence", message="Strong Bullish Divergence detected! Potential reversal up.")
+alertcondition(strong_bearish, title="Strong Bearish Divergence", message="Strong Bearish Divergence detected! Potential reversal down.")
