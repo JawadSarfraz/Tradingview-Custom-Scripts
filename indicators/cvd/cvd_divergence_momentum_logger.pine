@@ -1,0 +1,53 @@
+//@version=6
+indicator("CVD Divergences with Momentum Strength - Logger", overlay=true)
+
+// Define SMA Periods
+cvd_sma_length = 50
+cvd_momentum_length = 20
+price_momentum_length = 20
+
+// Compute CVD using cumulative volume delta method
+cvd = ta.cum(volume * (close - open))  
+cvd_sma = ta.sma(cvd, cvd_sma_length)
+
+// Compute momentum of CVD and price
+cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)
+price_diff = close - ta.sma(close, price_momentum_length)
+
+// Normalize CVD & Price Strength
+cvd_strength = math.abs(cvd_diff) / ta.sma(math.abs(cvd_diff), 20)
+price_strength = math.abs(price_diff) / ta.sma(math.abs(price_diff), 20)
+
+// Identify Bullish and Bearish Divergences
+bullish_divergence = cvd_diff > 0 and price_diff < 0  
+bearish_divergence = cvd_diff < 0 and price_diff > 0  
+
+// Define Strength Levels
+strong_bullish = bullish_divergence and cvd_strength > 1.5 and price_strength > 1.5
+medium_bullish = bullish_divergence and cvd_strength > 1 and price_strength > 1
+weak_bullish = bullish_divergence and cvd_strength < 1 and price_strength < 1
+
+strong_bearish = bearish_divergence and cvd_strength > 1.5 and price_strength > 1.5
+medium_bearish = bearish_divergence and cvd_strength > 1 and price_strength > 1
+weak_bearish = bearish_divergence and cvd_strength < 1 and price_strength < 1
+
+// ✅ Log Signals
+var table signal_table = table.new(position.top_right, 10, 5)
+
+if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
+    table.cell(signal_table, 0, 0, "Timestamp")
+    table.cell(signal_table, 1, 0, "Price")
+    table.cell(signal_table, 2, 0, "Divergence")
+    table.cell(signal_table, 3, 0, "Strength")
+
+    if strong_bullish
+        table.cell(signal_table, 0, bar_index, str.tostring(time))
+        table.cell(signal_table, 1, bar_index, str.tostring(close))
+        table.cell(signal_table, 2, bar_index, "Bullish")
+        table.cell(signal_table, 3, bar_index, "Strong")
+
+    if strong_bearish
+        table.cell(signal_table, 0, bar_index, str.tostring(time))
+        table.cell(signal_table, 1, bar_index, str.tostring(close))
+        table.cell(signal_table, 2, bar_index, "Bearish")
+        table.cell(signal_table, 3, bar_index, "Strong")
