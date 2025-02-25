@@ -14,9 +14,9 @@ cvd_sma = ta.sma(cvd, cvd_sma_length)  // Apply 50-period SMA for trend filterin
 cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)  // 20-period momentum for CVD
 price_diff = close - ta.sma(close, price_momentum_length)  // 20-period momentum for price
 
-// ✅ Normalize CVD & Price Strength
-cvd_strength = abs(cvd_diff) / ta.sma(abs(cvd_diff), 20)  // CVD momentum relative to avg
-price_strength = abs(price_diff) / ta.sma(abs(price_diff), 20)  // Price momentum relative to avg
+// ✅ Fix: Use math.abs() instead of abs()
+cvd_strength = math.abs(cvd_diff) / ta.sma(math.abs(cvd_diff), 20)  // CVD momentum relative to avg
+price_strength = math.abs(price_diff) / ta.sma(math.abs(price_diff), 20)  // Price momentum relative to avg
 
 // ✅ Identify Bullish and Bearish Divergences
 bullish_divergence = cvd_diff > 0 and price_diff < 0  // CVD rising, price falling
