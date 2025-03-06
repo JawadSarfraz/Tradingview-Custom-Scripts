@@ -22,12 +22,12 @@ price_strength = math.abs(price_diff) / ta.sma(math.abs(price_diff), 20)
 bullish_divergence = cvd_diff > 0 and price_diff < 0  
 bearish_divergence = cvd_diff < 0 and price_diff > 0  
 
-// Define Strength Levels
-strong_bullish = bullish_divergence and cvd_strength > 1.5 and price_strength > 1.5
+// Define Strength Levels (lowered threshold for testing)
+strong_bullish = bullish_divergence and cvd_strength > 1.2 and price_strength > 1.2
 medium_bullish = bullish_divergence and cvd_strength > 1 and price_strength > 1
 weak_bullish = bullish_divergence and cvd_strength < 1 and price_strength < 1
 
-strong_bearish = bearish_divergence and cvd_strength > 1.5 and price_strength > 1.5
+strong_bearish = bearish_divergence and cvd_strength > 1.2 and price_strength > 1.2
 medium_bearish = bearish_divergence and cvd_strength > 1 and price_strength > 1
 weak_bearish = bearish_divergence and cvd_strength < 1 and price_strength < 1
 
@@ -36,16 +36,18 @@ var float last_signal_price = na
 var string last_signal_type = na
 var int total_signals = 0
 var int successful_signals = 0
+var float last_success_check_price = na
 
-// Function to check if signal was successful
+// Function to check if signal was successful (modified to check next bar)
 is_signal_successful() =>
     if (not na(last_signal_price) and not na(last_signal_type))
-        if (last_signal_type == "Bullish")
-            close > last_signal_price
-        else
-            close < last_signal_price
-    else
-        false
+        if last_success_check_price != close  // Only check once per new bar
+            last_success_check_price := close
+            if (last_signal_type == "Bullish")
+                close > last_signal_price
+            else
+                close < last_signal_price
+    false
 
 // Update success tracking
 if (not na(last_signal_price) and not na(last_signal_type))
@@ -56,7 +58,19 @@ if (not na(last_signal_price) and not na(last_signal_type))
 success_rate = total_signals > 0 ? (successful_signals / total_signals) * 100 : 0
 
 // ✅ Log Signals with Performance Tracking
-var table signal_table = table.new(position.top_right, 10, 6)
+var table signal_table = table.new(position.top_right, 10, 7)
+
+// Debug info
+var label debug_label = na
+label.delete(debug_label)
+debug_label := label.new(
+    x=bar_index, 
+    y=low, 
+    text="CVD Strength: " + str.tostring(math.round(cvd_strength, 2)) + 
+         "\nPrice Strength: " + str.tostring(math.round(price_strength, 2)) +
+         "\nBullish: " + str.tostring(bullish_divergence) +
+         "\nBearish: " + str.tostring(bearish_divergence),
+    color=color.new(color.blue, 80))
 
 if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
     table.cell(signal_table, 0, 0, "Timestamp")
@@ -65,6 +79,7 @@ if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
     table.cell(signal_table, 3, 0, "Strength")
     table.cell(signal_table, 4, 0, "Next Bar Result")
     table.cell(signal_table, 5, 0, "Success Rate")
+    table.cell(signal_table, 6, 0, "Debug")
 
     if strong_bullish or strong_bearish
         signal_type = strong_bullish ? "Bullish" : "Bearish"
@@ -78,6 +93,11 @@ if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
         table.cell(signal_table, 3, 1, "Strong")
         table.cell(signal_table, 4, 1, "Pending")
         table.cell(signal_table, 5, 1, str.tostring(math.round(success_rate, 2)) + "%")
+        table.cell(signal_table, 6, 1, "CVD: " + str.tostring(math.round(cvd_strength, 2)))
+
+// Plot signals on chart
+plotshape(series=strong_bullish, title="Strong Bullish", location=location.belowbar, color=color.green, size=size.normal, style=shape.triangleup)
+plotshape(series=strong_bearish, title="Strong Bearish", location=location.abovebar, color=color.red, size=size.normal, style=shape.triangledown)
 
 // Plot success rate on chart
 var label success_label = na
