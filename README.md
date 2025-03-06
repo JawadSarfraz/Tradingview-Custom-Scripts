@@ -4,12 +4,64 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 
 ## 📂 Scripts Included
 
-| Script Name                                      | Description                                                                                                                                         |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CVD-Based Divergences (SMA 50)**               | Detects **bullish & bearish divergences** using CVD vs. price action, now optimized with **SMA 50** for stronger trend filtering.                   |
-| **CVD-Based Divergences with Momentum Strength** | Enhances CVD divergences by measuring **weak, medium, and strong divergences** using **momentum strength**. **Only strong signals trigger alerts.** |
-| **Filtered Bullish Fair Value Gaps**             | Highlights strong **FVG zones** to spot potential trade setups.                                                                                     |
-| **Bullish Order Block Finder (V1)**              | Detects **Bullish Order Blocks** with volume confirmation.                                                                                          |
+| Script Name                                         | Description                                                                                                                                         |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CVD-Based Divergences (SMA 50)**                  | Detects **bullish & bearish divergences** using CVD vs. price action, now optimized with **SMA 50** for stronger trend filtering.                   |
+| **CVD-Based Divergences with Momentum Strength**    | Enhances CVD divergences by measuring **weak, medium, and strong divergences** using **momentum strength**. **Only strong signals trigger alerts.** |
+| **CVD Divergences with Momentum Strength - Logger** | Advanced version that tracks and analyzes signal performance with historical success rates and detailed statistics.                                 |
+| **Filtered Bullish Fair Value Gaps**                | Highlights strong **FVG zones** to spot potential trade setups.                                                                                     |
+| **Bullish Order Block Finder (V1)**                 | Detects **Bullish Order Blocks** with volume confirmation.                                                                                          |
+
+---
+
+### **📊 CVD-Based Divergences with Momentum Strength - Logger**
+
+🚀 **Performance Tracking System for CVD Divergence Signals**
+
+### 🔹 **Features:**
+
+- **Signal Strength Classification:**
+
+  - Strong signals: CVD & Price strength > 1.2
+  - Medium signals: CVD & Price strength > 1.0
+  - Weak signals: CVD & Price strength < 1.0
+
+- **Real-time Performance Metrics:**
+
+  - Overall success rate
+  - Recent performance (last 10 signals)
+  - Total historical signals count
+
+- **Signal Validation:**
+
+  - Tracks next candle movement for success/failure
+  - Separate tracking for bullish and bearish signals
+  - Historical performance logging
+
+- **Debug Information:**
+  - Current CVD and Price strength values
+  - Divergence conditions status
+  - Real-time signal strength monitoring
+
+### 📈 **Parameters:**
+
+- **SMA Periods:**
+
+  - CVD SMA: 50 periods
+  - Momentum Length: 20 periods
+  - Price Momentum: 20 periods
+
+- **Strength Thresholds:**
+  - Strong Signal: > 1.2
+  - Medium Signal: > 1.0
+  - Weak Signal: < 1.0
+
+✅ **Best Used With:**
+
+- **Multiple Timeframe Analysis**
+- **Volume Confirmation**
+- **Support & Resistance Zones**
+- **Trend Direction Validation**
 
 ---
 
