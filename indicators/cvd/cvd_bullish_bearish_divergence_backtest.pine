@@ -1,0 +1,104 @@
+//@version=6
+indicator("CVD Divergences Backtest", overlay=true)
+
+// Define SMA Periods
+cvd_sma_length = 50
+cvd_momentum_length = 20
+
+// Compute CVD using cumulative volume delta method
+cvd = ta.cum(volume * (close - open))  
+cvd_sma = ta.sma(cvd, cvd_sma_length)
+
+// Compute momentum of CVD and price
+cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)
+price_diff = close - ta.sma(close, cvd_momentum_length)
+
+// Identify Divergences
+bullish_divergence = cvd_diff > 0 and price_diff < 0  
+bearish_divergence = cvd_diff < 0 and price_diff > 0  
+
+// Performance Tracking
+var int bullish_total = 0
+var int bullish_success = 0
+var int bearish_total = 0
+var int bearish_success = 0
+
+var float last_bullish_price = na
+var float last_bearish_price = na
+
+// Track signal results
+if bullish_divergence
+    bullish_total := bullish_total + 1
+    last_bullish_price := close
+
+if bearish_divergence
+    bearish_total := bearish_total + 1
+    last_bearish_price := close
+
+// Check success on next candle
+if not na(last_bullish_price) and close > last_bullish_price
+    bullish_success := bullish_success + 1
+    last_bullish_price := na
+
+if not na(last_bearish_price) and close < last_bearish_price
+    bearish_success := bearish_success + 1
+    last_bearish_price := na
+
+// Calculate success rates
+bullish_rate = bullish_total > 0 ? (bullish_success / bullish_total) * 100 : 0
+bearish_rate = bearish_total > 0 ? (bearish_success / bearish_total) * 100 : 0
+overall_rate = (bullish_total + bearish_total) > 0 ? ((bullish_success + bearish_success) / (bullish_total + bearish_total)) * 100 : 0
+
+// Plot signals
+plotshape(series=bullish_divergence, title="Bullish", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small)
+plotshape(series=bearish_divergence, title="Bearish", location=location.abovebar, color=color.red, style=shape.triangledown, size=size.small)
+
+// Display Stats Table
+var table stats = table.new(position.top_right, 6, 4, border_width=1)
+if barstate.islast
+    table.cell(stats, 0, 0, "Signal Type", bgcolor=color.gray)
+    table.cell(stats, 1, 0, "Total", bgcolor=color.gray)
+    table.cell(stats, 2, 0, "Success", bgcolor=color.gray)
+    table.cell(stats, 3, 0, "Rate", bgcolor=color.gray)
+    
+    table.cell(stats, 0, 1, "Bullish", bgcolor=color.green)
+    table.cell(stats, 1, 1, str.tostring(bullish_total))
+    table.cell(stats, 2, 1, str.tostring(bullish_success))
+    table.cell(stats, 3, 1, str.tostring(math.round(bullish_rate, 2)) + "%")
+    
+    table.cell(stats, 0, 2, "Bearish", bgcolor=color.red)
+    table.cell(stats, 1, 2, str.tostring(bearish_total))
+    table.cell(stats, 2, 2, str.tostring(bearish_success))
+    table.cell(stats, 3, 2, str.tostring(math.round(bearish_rate, 2)) + "%")
+    
+    table.cell(stats, 0, 3, "Overall", bgcolor=color.blue)
+    table.cell(stats, 1, 3, str.tostring(bullish_total + bearish_total))
+    table.cell(stats, 2, 3, str.tostring(bullish_success + bearish_success))
+    table.cell(stats, 3, 3, str.tostring(math.round(overall_rate, 2)) + "%")
+
+// Add profit metrics
+var float total_profit = 0.0
+var float max_drawdown = 0.0
+var float peak_balance = 0.0
+
+// Simple profit calculation (1% per trade)
+profit_per_trade = 1.0  // Assuming 1% profit target
+if bullish_divergence or bearish_divergence
+    trade_result = (bullish_divergence and close > last_bullish_price) or (bearish_divergence and close < last_bearish_price) ? profit_per_trade : -profit_per_trade
+    total_profit := total_profit + trade_result
+    
+    // Update max drawdown
+    peak_balance := math.max(peak_balance, total_profit)
+    current_drawdown = peak_balance - total_profit
+    max_drawdown := math.max(max_drawdown, current_drawdown)
+
+// Display additional metrics
+var label metrics_label = na
+label.delete(metrics_label)
+metrics_label := label.new(
+    x=bar_index, 
+    y=high + (high * 0.02),
+    text="Total Profit: " + str.tostring(math.round(total_profit, 2)) + "%\n" +
+         "Max Drawdown: " + str.tostring(math.round(max_drawdown, 2)) + "%\n" +
+         "Profit Factor: " + str.tostring(math.round(bullish_success + bearish_success > 0 ? total_profit / math.abs(max_drawdown) : 0, 2)),
+    color=color.new(color.blue, 80)) 
