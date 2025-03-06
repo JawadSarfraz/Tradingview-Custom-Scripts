@@ -31,23 +31,60 @@ strong_bearish = bearish_divergence and cvd_strength > 1.5 and price_strength > 
 medium_bearish = bearish_divergence and cvd_strength > 1 and price_strength > 1
 weak_bearish = bearish_divergence and cvd_strength < 1 and price_strength < 1
 
-// ✅ Log Signals
-var table signal_table = table.new(position.top_right, 10, 5)
+// Track Signal Performance
+var float last_signal_price = na
+var string last_signal_type = na
+var int total_signals = 0
+var int successful_signals = 0
+
+// Function to check if signal was successful
+is_signal_successful() =>
+    if (not na(last_signal_price) and not na(last_signal_type))
+        if (last_signal_type == "Bullish")
+            close > last_signal_price
+        else
+            close < last_signal_price
+    else
+        false
+
+// Update success tracking
+if (not na(last_signal_price) and not na(last_signal_type))
+    if (is_signal_successful())
+        successful_signals := successful_signals + 1
+
+// Calculate success rate
+success_rate = total_signals > 0 ? (successful_signals / total_signals) * 100 : 0
+
+// ✅ Log Signals with Performance Tracking
+var table signal_table = table.new(position.top_right, 10, 6)
 
 if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
     table.cell(signal_table, 0, 0, "Timestamp")
     table.cell(signal_table, 1, 0, "Price")
     table.cell(signal_table, 2, 0, "Divergence")
     table.cell(signal_table, 3, 0, "Strength")
+    table.cell(signal_table, 4, 0, "Next Bar Result")
+    table.cell(signal_table, 5, 0, "Success Rate")
 
-    if strong_bullish
-        table.cell(signal_table, 0, bar_index, str.tostring(time))
-        table.cell(signal_table, 1, bar_index, str.tostring(close))
-        table.cell(signal_table, 2, bar_index, "Bullish")
-        table.cell(signal_table, 3, bar_index, "Strong")
+    if strong_bullish or strong_bearish
+        signal_type = strong_bullish ? "Bullish" : "Bearish"
+        last_signal_price := close
+        last_signal_type := signal_type
+        total_signals := total_signals + 1
+        
+        table.cell(signal_table, 0, 1, str.tostring(time))
+        table.cell(signal_table, 1, 1, str.tostring(close))
+        table.cell(signal_table, 2, 1, signal_type)
+        table.cell(signal_table, 3, 1, "Strong")
+        table.cell(signal_table, 4, 1, "Pending")
+        table.cell(signal_table, 5, 1, str.tostring(math.round(success_rate, 2)) + "%")
 
-    if strong_bearish
-        table.cell(signal_table, 0, bar_index, str.tostring(time))
-        table.cell(signal_table, 1, bar_index, str.tostring(close))
-        table.cell(signal_table, 2, bar_index, "Bearish")
-        table.cell(signal_table, 3, bar_index, "Strong")
+// Plot success rate on chart
+var label success_label = na
+label.delete(success_label)
+success_label := label.new(
+    x=bar_index, 
+    y=high, 
+    text="Success Rate: " + str.tostring(math.round(success_rate, 2)) + "%\nTotal Signals: " + str.tostring(total_signals), 
+    color=color.new(color.blue, 80)
+)
