@@ -9,6 +9,7 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 | **CVD-Based Divergences (SMA 50)**                  | Detects **bullish & bearish divergences** using CVD vs. price action, now optimized with **SMA 50** for stronger trend filtering.                   |
 | **CVD-Based Divergences with Momentum Strength**    | Enhances CVD divergences by measuring **weak, medium, and strong divergences** using **momentum strength**. **Only strong signals trigger alerts.** |
 | **CVD Divergences with Momentum Strength - Logger** | Advanced version that tracks and analyzes signal performance with historical success rates and detailed statistics.                                 |
+| **CVD Divergences Backtest**                        | Specialized version for backtesting divergence signals with comprehensive performance metrics and profit analysis.                                  |
 | **Filtered Bullish Fair Value Gaps**                | Highlights strong **FVG zones** to spot potential trade setups.                                                                                     |
 | **Bullish Order Block Finder (V1)**                 | Detects **Bullish Order Blocks** with volume confirmation.                                                                                          |
 
@@ -134,5 +135,53 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 - **Fair Value Gaps (FVGs)**
 - **High Volume Confirmation**
 - **Multi-Timeframe Analysis**
+
+---
+
+### **📊 CVD Divergences Backtest**
+
+🚀 **Comprehensive Backtesting System for CVD Divergence Signals**
+
+### 🔹 **Features:**
+
+- **Signal Performance Tracking:**
+
+  - Separate tracking for bullish and bearish signals
+  - Success rate calculation for each signal type
+  - Overall performance statistics
+
+- **Performance Metrics:**
+
+  - Total signals generated
+  - Success count by signal type
+  - Success rate percentages
+  - Total profit calculation
+  - Maximum drawdown tracking
+  - Profit factor analysis
+
+- **Visual Analytics:**
+  - Real-time statistics table
+  - Performance metrics display
+  - Signal markers on chart
+  - Profit/drawdown visualization
+
+### 📈 **Parameters:**
+
+- **SMA Settings:**
+
+  - CVD SMA Length: 50 periods
+  - Momentum Length: 20 periods
+
+- **Profit Calculation:**
+  - Default 1% profit target per trade
+  - Adjustable profit targets
+  - Drawdown tracking
+
+✅ **Best Used For:**
+
+- Analyzing historical performance
+- Optimizing strategy parameters
+- Risk assessment
+- Performance comparison across timeframes
 
 ---
