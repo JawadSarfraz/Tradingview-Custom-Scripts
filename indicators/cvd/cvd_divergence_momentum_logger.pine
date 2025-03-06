@@ -36,23 +36,24 @@ var float last_signal_price = na
 var string last_signal_type = na
 var int total_signals = 0
 var int successful_signals = 0
-var float last_success_check_price = na
+var float last_check_price = na
 
-// Function to check if signal was successful (modified to check next bar)
-is_signal_successful() =>
-    if (not na(last_signal_price) and not na(last_signal_type))
-        if last_success_check_price != close  // Only check once per new bar
-            last_success_check_price := close
-            if (last_signal_type == "Bullish")
-                close > last_signal_price
-            else
-                close < last_signal_price
-    false
+// Function to check if signal was successful
+is_signal_successful(signal_price, signal_type, current_price) =>
+    if (not na(signal_price) and not na(signal_type))
+        if (signal_type == "Bullish")
+            current_price > signal_price
+        else
+            current_price < signal_price
+    else
+        false
 
 // Update success tracking
 if (not na(last_signal_price) and not na(last_signal_type))
-    if (is_signal_successful())
-        successful_signals := successful_signals + 1
+    if (last_check_price != close)  // Only check once per new bar
+        last_check_price := close
+        if (is_signal_successful(last_signal_price, last_signal_type, close))
+            successful_signals := successful_signals + 1
 
 // Calculate success rate
 success_rate = total_signals > 0 ? (successful_signals / total_signals) * 100 : 0
@@ -106,5 +107,4 @@ success_label := label.new(
     x=bar_index, 
     y=high, 
     text="Success Rate: " + str.tostring(math.round(success_rate, 2)) + "%\nTotal Signals: " + str.tostring(total_signals), 
-    color=color.new(color.blue, 80)
-)
+    color=color.new(color.blue, 80))
