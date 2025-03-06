@@ -31,6 +31,12 @@ strong_bearish = bearish_divergence and cvd_strength > 1.2 and price_strength > 
 medium_bearish = bearish_divergence and cvd_strength > 1 and price_strength > 1
 weak_bearish = bearish_divergence and cvd_strength < 1 and price_strength < 1
 
+// Historical Signal Tracking
+var int[] signal_bars = array.new_int(0)
+var float[] signal_prices = array.new_float(0)
+var string[] signal_types = array.new_string(0)
+var bool[] signal_results = array.new_bool(0)
+
 // Track Signal Performance
 var float last_signal_price = na
 var string last_signal_type = na
@@ -48,18 +54,53 @@ is_signal_successful(signal_price, signal_type, current_price) =>
     else
         false
 
-// Update success tracking
-if (not na(last_signal_price) and not na(last_signal_type))
-    if (last_check_price != close)  // Only check once per new bar
-        last_check_price := close
-        if (is_signal_successful(last_signal_price, last_signal_type, close))
-            successful_signals := successful_signals + 1
+// Update historical signals
+if strong_bullish or strong_bearish
+    array.push(signal_bars, bar_index)
+    array.push(signal_prices, close)
+    array.push(signal_types, strong_bullish ? "Bullish" : "Bearish")
+    array.push(signal_results, false)  // Will update in next bar
 
-// Calculate success rate
-success_rate = total_signals > 0 ? (successful_signals / total_signals) * 100 : 0
+// Update previous signal results
+if array.size(signal_bars) > 0
+    last_idx = array.size(signal_bars) - 1
+    if bar_index > array.get(signal_bars, last_idx) + 1  // Check next bar
+        signal_price = array.get(signal_prices, last_idx)
+        signal_type = array.get(signal_types, last_idx)
+        result = is_signal_successful(signal_price, signal_type, close)
+        array.set(signal_results, last_idx, result)
+
+// Calculate Historical Performance
+get_historical_stats() =>
+    var int total = 0
+    var int success = 0
+    var float recent_rate = 0.0
+    
+    if array.size(signal_results) > 0
+        total := array.size(signal_results)
+        
+        // Count successful signals manually since we can't sum booleans
+        success := 0
+        for i = 0 to array.size(signal_results) - 1
+            if array.get(signal_results, i)
+                success += 1
+        
+        // Calculate recent performance (last 10 signals)
+        recent_size = math.min(10, array.size(signal_results))
+        recent_success = 0
+        for i = 0 to recent_size - 1
+            idx = array.size(signal_results) - 1 - i
+            if array.get(signal_results, idx)
+                recent_success += 1
+        recent_rate := recent_success / recent_size * 100
+    
+    [total, success, recent_rate]
+
+[total_hist, success_hist, recent_rate] = get_historical_stats()
+overall_rate = total_hist > 0 ? (success_hist / total_hist) * 100 : 0.0
 
 // ✅ Log Signals with Performance Tracking
-var table signal_table = table.new(position.top_right, 10, 7)
+var table signal_table = table.new(position.top_right, 10, 8)
 
 // Debug info
 var label debug_label = na
@@ -70,7 +111,10 @@ debug_label := label.new(
     text="CVD Strength: " + str.tostring(math.round(cvd_strength, 2)) + 
          "\nPrice Strength: " + str.tostring(math.round(price_strength, 2)) +
          "\nBullish: " + str.tostring(bullish_divergence) +
-         "\nBearish: " + str.tostring(bearish_divergence),
+         "\nBearish: " + str.tostring(bearish_divergence) +
+         "\n\nHistorical Signals: " + str.tostring(total_hist) +
+         "\nOverall Success: " + str.tostring(math.round(overall_rate, 2)) + "%" +
+         "\nRecent Success: " + str.tostring(math.round(recent_rate, 2)) + "%",
     color=color.new(color.blue, 80))
 
 if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
@@ -79,8 +123,9 @@ if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
     table.cell(signal_table, 2, 0, "Divergence")
     table.cell(signal_table, 3, 0, "Strength")
     table.cell(signal_table, 4, 0, "Next Bar Result")
-    table.cell(signal_table, 5, 0, "Success Rate")
-    table.cell(signal_table, 6, 0, "Debug")
+    table.cell(signal_table, 5, 0, "Overall Rate")
+    table.cell(signal_table, 6, 0, "Recent Rate")
+    table.cell(signal_table, 7, 0, "Debug")
 
     if strong_bullish or strong_bearish
         signal_type = strong_bullish ? "Bullish" : "Bearish"
@@ -93,8 +138,9 @@ if bar_index % 5 == 0 // Log every 5 bars to avoid clutter
         table.cell(signal_table, 2, 1, signal_type)
         table.cell(signal_table, 3, 1, "Strong")
         table.cell(signal_table, 4, 1, "Pending")
-        table.cell(signal_table, 5, 1, str.tostring(math.round(success_rate, 2)) + "%")
-        table.cell(signal_table, 6, 1, "CVD: " + str.tostring(math.round(cvd_strength, 2)))
+        table.cell(signal_table, 5, 1, str.tostring(math.round(overall_rate, 2)) + "%")
+        table.cell(signal_table, 6, 1, str.tostring(math.round(recent_rate, 2)) + "%")
+        table.cell(signal_table, 7, 1, "CVD: " + str.tostring(math.round(cvd_strength, 2)))
 
 // Plot signals on chart
 plotshape(series=strong_bullish, title="Strong Bullish", location=location.belowbar, color=color.green, size=size.normal, style=shape.triangleup)
@@ -106,5 +152,7 @@ label.delete(success_label)
 success_label := label.new(
     x=bar_index, 
     y=high, 
-    text="Success Rate: " + str.tostring(math.round(success_rate, 2)) + "%\nTotal Signals: " + str.tostring(total_signals), 
+    text="Overall Success Rate: " + str.tostring(math.round(overall_rate, 2)) + "%\n" +
+         "Recent Success Rate: " + str.tostring(math.round(recent_rate, 2)) + "%\n" +
+         "Total Historical Signals: " + str.tostring(total_hist), 
     color=color.new(color.blue, 80))
