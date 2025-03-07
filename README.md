@@ -10,6 +10,7 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 | **CVD-Based Divergences with Momentum Strength**    | Enhances CVD divergences by measuring **weak, medium, and strong divergences** using **momentum strength**. **Only strong signals trigger alerts.** |
 | **CVD Divergences with Momentum Strength - Logger** | Advanced version that tracks and analyzes signal performance with historical success rates and detailed statistics.                                 |
 | **CVD Divergences Backtest**                        | Specialized version for backtesting divergence signals with comprehensive performance metrics and profit analysis.                                  |
+| **CVD Divergences R-Multiple Backtest (RSI)**       | Enhanced backtest version incorporating RSI confirmation for improved signal quality and performance tracking.                                      |
 | **Filtered Bullish Fair Value Gaps**                | Highlights strong **FVG zones** to spot potential trade setups.                                                                                     |
 | **Bullish Order Block Finder (V1)**                 | Detects **Bullish Order Blocks** with volume confirmation.                                                                                          |
 
@@ -183,5 +184,66 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 - Optimizing strategy parameters
 - Risk assessment
 - Performance comparison across timeframes
+
+---
+
+### **📊 CVD Divergences R-Multiple Backtest (RSI)**
+
+🚀 **Advanced Backtest System with RSI Confirmation**
+
+### 🔹 **Features:**
+
+- **RSI Integration:**
+
+  - Uses RSI(14) for signal confirmation
+  - Oversold level at 40 for bullish signals
+  - Overbought level at 60 for bearish signals
+  - Visual RSI level indicators
+
+- **Signal Requirements:**
+
+  - Bullish: CVD divergence + RSI oversold condition
+  - Bearish: CVD divergence + RSI overbought condition
+  - Automated signal validation
+
+- **Performance Metrics:**
+  - Total signals with RSI confirmation
+  - Success rate for RSI-confirmed signals
+  - R-multiple calculation for risk-adjusted returns
+  - Separate tracking for timeouts
+
+### 📈 **Parameters:**
+
+- **RSI Settings:**
+
+  - Length: 14 periods
+  - Oversold: 40 (more aggressive than traditional 30)
+  - Overbought: 60 (more aggressive than traditional 70)
+
+- **Risk Management:**
+  - Configurable R-multiple targets
+  - Default 2R profit target
+  - 1R stop loss
+  - Maximum 20 bars hold time
+
+### 🎯 **Signal Logic:**
+
+1. **Bullish Signal Requirements:**
+
+   - CVD increasing while price decreasing
+   - RSI below 40 (oversold)
+   - No active trade in progress
+
+2. **Bearish Signal Requirements:**
+   - CVD decreasing while price increasing
+   - RSI above 60 (overbought)
+   - No active trade in progress
+
+✅ **Best Used For:**
+
+- Trend reversal confirmation
+- Momentum-based entries
+- Risk-managed position taking
+- Performance analysis and optimization
 
 ---
