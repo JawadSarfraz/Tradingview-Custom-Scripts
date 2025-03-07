@@ -247,3 +247,42 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 - Performance analysis and optimization
 
 ---
+
+## CVD Divergence with EMA Trend Alignment
+
+A streamlined version of the CVD divergence script that uses Exponential Moving Averages (EMAs) for trend alignment. This version focuses on taking trades in the direction of the prevailing trend.
+
+### Features
+
+- Uses 20 and 50 period EMAs for trend identification
+- Takes bullish signals only in uptrends (EMA20 > EMA50)
+- Takes bearish signals only in downtrends (EMA20 < EMA50)
+- Implements R-multiple based backtesting (2R profit target, 1R stop loss)
+- Tracks performance metrics including win rate and R-multiple returns
+- Maximum trade duration of 20 bars before timeout
+
+### Trading Rules
+
+1. **Entry Conditions**:
+   - Bullish: CVD divergence + EMA20 above EMA50
+   - Bearish: CVD divergence + EMA20 below EMA50
+2. **Trade Management**:
+   - Enter on the next candle after signal
+   - Take profit at 2R (twice the risk)
+   - Stop loss at 1R (initial risk)
+   - Trade expires after 20 bars if no target hit
+
+### Performance Tracking
+
+- Tracks total signals, successful trades, and win rates
+- Calculates R-multiple returns for risk-adjusted performance
+- Separate statistics for bullish and bearish signals
+- Overall performance metrics including total R-multiple gained
+
+### File Location
+
+```
+indicators/cvd/cvd_divergence_rmultiple_ema_backtest.pine
+```
+
+---
