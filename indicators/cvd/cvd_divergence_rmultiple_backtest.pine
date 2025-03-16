@@ -1,4 +1,7 @@
 //@version=6
+//More Reliable More Winning Scrore on SOL, Give More Signals
+//We can mark as 1st as compare to others
+
 indicator("CVD Divergences R-Multiple Backtest", overlay=true)
 
 // Define SMA Periods
