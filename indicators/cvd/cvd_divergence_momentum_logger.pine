@@ -1,4 +1,7 @@
 //@version=6
+//Some Resutls being Shown with Inclusive Point of view.
+//Unrealiable With no FollowUp Examples
+
 indicator("CVD Divergences with Momentum Strength - Logger", overlay=true)
 
 // Define SMA Periods
