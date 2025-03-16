@@ -1,4 +1,5 @@
 //@version=6
+//CVD Bearish Div With SMA 14
 indicator("CVD-Based Bearish Divergences (SMA 14)", overlay=true)
 
 // Define SMA Periods for faster responsiveness
