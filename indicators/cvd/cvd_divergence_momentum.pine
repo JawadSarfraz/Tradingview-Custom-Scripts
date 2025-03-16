@@ -1,4 +1,5 @@
 //@version=6
+//Give Singls But hard to track as ther is no Backtesting Involve. Maybe Discover More in Future
 indicator("CVD-Based Divergences with Momentum Strength", overlay=true)
 
 // Define SMA Periods
