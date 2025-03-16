@@ -1,0 +1,204 @@
+//@version=6
+indicator("CVD Divergences Strength Backtest", overlay=true)
+
+// Input Parameters
+cvd_sma_length = input.int(50, "CVD SMA Length", minval=1)
+cvd_momentum_length = input.int(20, "Momentum Length", minval=1)
+
+// Strength Thresholds
+strong_threshold = input.float(1.2, "Strong Signal Threshold", minval=1.0, step=0.1)
+medium_threshold = input.float(1.0, "Medium Signal Threshold", minval=0.8, step=0.1)
+
+// Risk Management
+risk_multiple = input.float(1.0, "Risk Multiple (%)", minval=0.1, step=0.1)
+reward_multiple = input.float(2.0, "Reward Multiple (%)", minval=0.1, step=0.1)
+max_bars = input.int(20, "Maximum Bars to Hold", minval=1)
+
+// Compute CVD
+cvd = ta.cum(volume * (close - open))  
+cvd_sma = ta.sma(cvd, cvd_sma_length)
+
+// Compute momentum of CVD and price
+cvd_diff = cvd - ta.sma(cvd, cvd_momentum_length)
+price_diff = close - ta.sma(close, cvd_momentum_length)
+
+// Calculate Momentum Strength
+cvd_avg_movement = ta.sma(math.abs(cvd_diff), cvd_momentum_length)
+price_avg_movement = ta.sma(math.abs(price_diff), cvd_momentum_length)
+
+cvd_strength = math.abs(cvd_diff) / cvd_avg_movement
+price_strength = math.abs(price_diff) / price_avg_movement
+
+// Overall divergence strength (use the minimum of both)
+divergence_strength = math.min(cvd_strength, price_strength)
+
+// Basic divergence conditions
+bullish_divergence = cvd_diff > 0 and price_diff < 0
+bearish_divergence = cvd_diff < 0 and price_diff > 0
+
+// Classify divergences by strength
+strong_bullish = bullish_divergence and divergence_strength >= strong_threshold
+medium_bullish = bullish_divergence and divergence_strength >= medium_threshold and divergence_strength < strong_threshold
+weak_bullish = bullish_divergence and divergence_strength < medium_threshold
+
+strong_bearish = bearish_divergence and divergence_strength >= strong_threshold
+medium_bearish = bearish_divergence and divergence_strength >= medium_threshold and divergence_strength < strong_threshold
+weak_bearish = bearish_divergence and divergence_strength < medium_threshold
+
+// Performance tracking variables
+var float last_signal_price = na
+var int last_signal_type = 0  // 0=none, 1=strong bull, 2=medium bull, -1=strong bear, -2=medium bear
+var int bars_since_signal = 0
+var int timeout_count = 0
+
+// Track signals by strength
+var int strong_bull_total = 0
+var int strong_bull_hits = 0
+var int strong_bull_stops = 0
+var int medium_bull_total = 0
+var int medium_bull_hits = 0
+var int medium_bull_stops = 0
+var int strong_bear_total = 0
+var int strong_bear_hits = 0
+var int strong_bear_stops = 0
+var int medium_bear_total = 0
+var int medium_bear_hits = 0
+var int medium_bear_stops = 0
+
+// Signal tracking logic
+if strong_bullish
+    strong_bull_total := strong_bull_total + 1
+    last_signal_price := close
+    last_signal_type := 1
+    bars_since_signal := 0
+else if medium_bullish
+    medium_bull_total := medium_bull_total + 1
+    last_signal_price := close
+    last_signal_type := 2
+    bars_since_signal := 0
+else if strong_bearish
+    strong_bear_total := strong_bear_total + 1
+    last_signal_price := close
+    last_signal_type := -1
+    bars_since_signal := 0
+else if medium_bearish
+    medium_bear_total := medium_bear_total + 1
+    last_signal_price := close
+    last_signal_type := -2
+    bars_since_signal := 0
+
+// Plot signals with strength-based visualization
+plotshape(strong_bullish, title="Strong Bullish", location=location.belowbar, color=color.new(color.green, 0), style=shape.triangleup, size=size.small)
+plotshape(medium_bullish, title="Medium Bullish", location=location.belowbar, color=color.new(color.green, 40), style=shape.triangleup, size=size.tiny)
+plotshape(weak_bullish, title="Weak Bullish", location=location.belowbar, color=color.new(color.green, 80), style=shape.triangleup, size=size.tiny)
+
+plotshape(strong_bearish, title="Strong Bearish", location=location.abovebar, color=color.new(color.red, 0), style=shape.triangledown, size=size.small)
+plotshape(medium_bearish, title="Medium Bearish", location=location.abovebar, color=color.new(color.red, 40), style=shape.triangledown, size=size.tiny)
+plotshape(weak_bearish, title="Weak Bearish", location=location.abovebar, color=color.new(color.red, 80), style=shape.triangledown, size=size.tiny)
+
+// Update performance tracking
+if not na(last_signal_price) and bars_since_signal < max_bars
+    bars_since_signal := bars_since_signal + 1
+    
+    // Check for profit target (2R)
+    if last_signal_type > 0 and high >= (last_signal_price * (1 + reward_multiple/100))
+        if last_signal_type == 1
+            strong_bull_hits := strong_bull_hits + 1
+        else if last_signal_type == 2
+            medium_bull_hits := medium_bull_hits + 1
+        last_signal_price := na
+        last_signal_type := 0
+        bars_since_signal := 0
+    
+    // Check for stop loss (1R)
+    else if last_signal_type > 0 and low <= (last_signal_price * (1 - risk_multiple/100))
+        if last_signal_type == 1
+            strong_bull_stops := strong_bull_stops + 1
+        else if last_signal_type == 2
+            medium_bull_stops := medium_bull_stops + 1
+        last_signal_price := na
+        last_signal_type := 0
+        bars_since_signal := 0
+    
+    // Check bearish targets
+    else if last_signal_type < 0 and low <= (last_signal_price * (1 - reward_multiple/100))
+        if last_signal_type == -1
+            strong_bear_hits := strong_bear_hits + 1
+        else if last_signal_type == -2
+            medium_bear_hits := medium_bear_hits + 1
+        last_signal_price := na
+        last_signal_type := 0
+        bars_since_signal := 0
+    
+    // Check bearish stops
+    else if last_signal_type < 0 and high >= (last_signal_price * (1 + risk_multiple/100))
+        if last_signal_type == -1
+            strong_bear_stops := strong_bear_stops + 1
+        else if last_signal_type == -2
+            medium_bear_stops := medium_bear_stops + 1
+        last_signal_price := na
+        last_signal_type := 0
+        bars_since_signal := 0
+
+// Handle timeouts
+if not na(last_signal_price) and bars_since_signal >= max_bars
+    timeout_count := timeout_count + 1
+    last_signal_price := na
+    last_signal_type := 0
+    bars_since_signal := 0
+
+// Calculate success rates
+strong_bull_rate = strong_bull_total > 0 ? (strong_bull_hits/strong_bull_total) * 100 : 0
+medium_bull_rate = medium_bull_total > 0 ? (medium_bull_hits/medium_bull_total) * 100 : 0
+strong_bear_rate = strong_bear_total > 0 ? (strong_bear_hits/strong_bear_total) * 100 : 0
+medium_bear_rate = medium_bear_total > 0 ? (medium_bear_hits/medium_bear_total) * 100 : 0
+
+// Display Stats Table
+var table stats = table.new(position.top_right, 7, 5, border_width=1)
+if barstate.islast
+    table.cell(stats, 0, 0, "Signal Type", bgcolor=color.gray)
+    table.cell(stats, 1, 0, "Total", bgcolor=color.gray)
+    table.cell(stats, 2, 0, "Hits", bgcolor=color.gray)
+    table.cell(stats, 3, 0, "Stops", bgcolor=color.gray)
+    table.cell(stats, 4, 0, "Win Rate", bgcolor=color.gray)
+    
+    // Strong Bullish Stats
+    table.cell(stats, 0, 1, "Strong Bull", bgcolor=color.green)
+    table.cell(stats, 1, 1, str.tostring(strong_bull_total))
+    table.cell(stats, 2, 1, str.tostring(strong_bull_hits))
+    table.cell(stats, 3, 1, str.tostring(strong_bull_stops))
+    table.cell(stats, 4, 1, str.tostring(math.round(strong_bull_rate, 2)) + "%")
+    
+    // Medium Bullish Stats
+    table.cell(stats, 0, 2, "Med Bull", bgcolor=color.new(color.green, 40))
+    table.cell(stats, 1, 2, str.tostring(medium_bull_total))
+    table.cell(stats, 2, 2, str.tostring(medium_bull_hits))
+    table.cell(stats, 3, 2, str.tostring(medium_bull_stops))
+    table.cell(stats, 4, 2, str.tostring(math.round(medium_bull_rate, 2)) + "%")
+    
+    // Strong Bearish Stats
+    table.cell(stats, 0, 3, "Strong Bear", bgcolor=color.red)
+    table.cell(stats, 1, 3, str.tostring(strong_bear_total))
+    table.cell(stats, 2, 3, str.tostring(strong_bear_hits))
+    table.cell(stats, 3, 3, str.tostring(strong_bear_stops))
+    table.cell(stats, 4, 3, str.tostring(math.round(strong_bear_rate, 2)) + "%")
+    
+    // Medium Bearish Stats
+    table.cell(stats, 0, 4, "Med Bear", bgcolor=color.new(color.red, 40))
+    table.cell(stats, 1, 4, str.tostring(medium_bear_total))
+    table.cell(stats, 2, 4, str.tostring(medium_bear_hits))
+    table.cell(stats, 3, 4, str.tostring(medium_bear_stops))
+    table.cell(stats, 4, 4, str.tostring(math.round(medium_bear_rate, 2)) + "%")
+
+// Display Settings
+var label settings_label = na
+label.delete(settings_label)
+settings_label := label.new(
+    x=bar_index, 
+    y=high + (high * 0.02),
+    text="Strength Thresholds:\n" +
+         "Strong: ≥" + str.tostring(strong_threshold) + "x\n" +
+         "Medium: ≥" + str.tostring(medium_threshold) + "x\n" +
+         "Risk: " + str.tostring(risk_multiple) + "% | Reward: " + str.tostring(reward_multiple) + "%\n" +
+         "Max Bars: " + str.tostring(max_bars),
+    color=color.new(color.blue, 80)) 
