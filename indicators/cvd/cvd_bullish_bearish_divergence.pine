@@ -1,4 +1,6 @@
 //@version=6
+//Lead Some Insane Signals On Eth on higer TF...
+// But overall Not super Reliable. We can use its Parameters for Future Implementations
 indicator("CVD-Based Divergences (SMA 50)", overlay=true)
 
 // Define SMA Periods
