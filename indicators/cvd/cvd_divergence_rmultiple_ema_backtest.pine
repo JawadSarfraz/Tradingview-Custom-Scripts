@@ -1,4 +1,5 @@
 //@version=6
+// strict Few Signals. On BTC 65 with just 58Percent Winning Score..
 indicator("CVD Divergences R-Multiple Backtest (EMA)", overlay=true)
 
 // Define SMA Periods
