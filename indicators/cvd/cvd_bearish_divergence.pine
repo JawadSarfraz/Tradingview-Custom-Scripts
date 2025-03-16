@@ -1,4 +1,6 @@
 //@version=6
+//Spot bearish CVD, We dont have BackTest to effectively Conclude it...
+
 indicator("CVD-Based Bearish Divergences (SMA 50)", overlay=true)
 
 // Define SMA Periods
