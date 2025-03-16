@@ -1,4 +1,6 @@
 //@version=6
+//NOT GOOD, seems quite strict as NO signals originates...
+
 indicator("CVD Divergences Strength Backtest", overlay=true)
 
 // Input Parameters
