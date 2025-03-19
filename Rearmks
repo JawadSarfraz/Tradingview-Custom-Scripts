@@ -1,0 +1,20 @@
+Uptil now cvd/cvd_divergence_rmultiple_backtest.pine
+produce insane results
+
+it contains Volume integration - Good
+in future we can integrate the more indicator like 
+1- RSI - just checked, Works Good, but very Fewer Signals. maybe Avoid?
+2- Add Trend Alignment (EMAs for trend) - GREAT WORK on 1Day as others. So we can also refine this setup later on.
+3- Strength of Divergence
+4- And more, find out what
+5- also check we can make things better for cvd_divergence
+So first implement all Independently and then apply combinations of them
+then find results against
+
+
+1- Each coins - Diff Time frames - analysis - Give each coin of its own setup against eachtime - QUITE TIME NEEDED TO ANALYZZZEEEEE.....
+
+
+Emm... Above consideration works with 1D TF we have to nourish Cvd_Divergence for lower TFs...
+
+POINT 2 is being Done... comeback strogn tiomow
