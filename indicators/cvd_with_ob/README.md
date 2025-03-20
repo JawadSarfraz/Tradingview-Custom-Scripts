@@ -2,6 +2,53 @@
 
 This implementation combines Cumulative Volume Delta (CVD) analysis with Order Block detection to create a comprehensive trading strategy indicator.
 
+## Implementations
+
+### 1. Basic Implementation (basic_cvd_ob.pine)
+
+A foundational approach combining CVD with Order Blocks. See details in [Basic Implementation](#basic-implementation-basic_cvd_obpine) section below.
+
+### 2. Multi-SMA Implementation (cvd_ob_multi_sma.pine)
+
+An enhanced version using multiple SMAs for more refined signal generation and trend confirmation.
+
+#### Key Features
+
+- Triple SMA system for CVD analysis:
+  - Fast (10 periods): Quick reaction to changes
+  - Medium (21 periods): Intermediate confirmation
+  - Slow (50 periods): Long-term trend validation
+- Price SMA confirmation (10 and 21 periods)
+- Signal strength classification
+- Enhanced Order Block detection
+
+#### Signal Types
+
+1. **Strong Signals**
+
+   - Requires alignment of all three CVD SMAs
+   - Price momentum confirmation
+   - Trend alignment with price SMAs
+   - Larger visual indicators
+
+2. **Medium Signals**
+   - Requires alignment of fast and medium CVD SMAs
+   - Less stringent criteria than strong signals
+   - Smaller visual indicators
+
+#### Parameters
+
+| Category      | Parameter    | Default | Description              |
+| ------------- | ------------ | ------- | ------------------------ |
+| CVD SMAs      | Fast         | 10      | Quick momentum detection |
+|               | Medium       | 21      | Intermediate trend       |
+|               | Slow         | 50      | Long-term trend          |
+| Price SMAs    | Fast         | 10      | Short-term price trend   |
+|               | Slow         | 21      | Medium-term price trend  |
+| Order Blocks  | Lookback     | 10      | OB formation period      |
+| Visualization | Show Zones   | true    | Toggle OB zones          |
+|               | Transparency | 70      | Zone visibility          |
+
 ## Core Concepts
 
 ### Cumulative Volume Delta (CVD)
