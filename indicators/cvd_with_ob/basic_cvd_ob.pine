@@ -39,9 +39,7 @@ bearish_signal = bearish_ob and cvd_momentum < 0
 
 // =================== Visualization ===================
 // Plot Order Block Zones
-if show_ob_zones
-    bgcolor(bullish_ob ? color.new(color.green, ob_zone_transp) : na)
-    bgcolor(bearish_ob ? color.new(color.red, ob_zone_transp) : na)
+bgcolor(show_ob_zones ? (bullish_ob ? color.new(color.green, ob_zone_transp) : bearish_ob ? color.new(color.red, ob_zone_transp) : na) : na)
 
 // Plot Signals
 plotshape(bullish_signal, "Bullish Signal", shape.triangleup, location.belowbar, 
