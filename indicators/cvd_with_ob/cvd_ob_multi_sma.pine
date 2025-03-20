@@ -1,0 +1,107 @@
+//@version=6
+indicator("CVD-OB Multi-SMA Analysis", overlay=true)
+
+// =================== Input Parameters ===================
+// CVD SMA Parameters
+cvd_fast_length = input.int(10, "CVD Fast SMA", minval=1, maxval=50, group="CVD SMAs")
+cvd_medium_length = input.int(21, "CVD Medium SMA", minval=1, maxval=100, group="CVD SMAs")
+cvd_slow_length = input.int(50, "CVD Slow SMA", minval=1, maxval=200, group="CVD SMAs")
+
+// Price SMA Parameters
+price_fast_length = input.int(10, "Price Fast SMA", minval=1, maxval=50, group="Price SMAs")
+price_slow_length = input.int(21, "Price Slow SMA", minval=1, maxval=100, group="Price SMAs")
+
+// Order Block Parameters
+ob_lookback = input.int(10, "Order Block Lookback", minval=1, maxval=50, group="Order Blocks")
+show_ob_zones = input.bool(true, "Show Order Block Zones", inline="zones", group="Visualization")
+ob_zone_transp = input.int(70, "Zone Transparency", minval=0, maxval=100, inline="zones", group="Visualization")
+
+// =================== CVD Calculations ===================
+// Basic CVD
+cvd = ta.cum(volume * (close - open))
+
+// Multiple CVD SMAs
+cvd_fast_sma = ta.sma(cvd, cvd_fast_length)
+cvd_medium_sma = ta.sma(cvd, cvd_medium_length)
+cvd_slow_sma = ta.sma(cvd, cvd_slow_length)
+
+// CVD Momentum using multiple timeframes
+cvd_fast_momentum = cvd - cvd_fast_sma
+cvd_medium_momentum = cvd - cvd_medium_sma
+cvd_slow_momentum = cvd - cvd_slow_sma
+
+// =================== Price SMAs ===================
+price_fast_sma = ta.sma(close, price_fast_length)
+price_slow_sma = ta.sma(close, price_slow_length)
+
+// Price momentum
+price_momentum = price_fast_sma - price_slow_sma
+
+// =================== Order Block Detection ===================
+atr = ta.atr(14)
+candle_size = high - low
+is_significant_candle = candle_size > (atr * 1.2)
+
+// Enhanced Order Block Detection with Price SMAs
+bullish_ob = is_significant_candle and 
+             close > open and 
+             high[1] > high[2] and 
+             low[1] < low and
+             close > price_fast_sma and    // Price above fast SMA
+             price_fast_sma > price_slow_sma  // Upward price trend
+
+bearish_ob = is_significant_candle and 
+             close < open and 
+             low[1] < low[2] and 
+             high[1] > high and
+             close < price_fast_sma and    // Price below fast SMA
+             price_fast_sma < price_slow_sma  // Downward price trend
+
+// =================== Signal Generation ===================
+// Strong signals require alignment of all CVD momentums
+strong_bullish = bullish_ob and 
+                 cvd_fast_momentum > 0 and 
+                 cvd_medium_momentum > 0 and 
+                 cvd_slow_momentum > 0 and
+                 price_momentum > 0
+
+strong_bearish = bearish_ob and 
+                 cvd_fast_momentum < 0 and 
+                 cvd_medium_momentum < 0 and 
+                 cvd_slow_momentum < 0 and
+                 price_momentum < 0
+
+// Medium signals require alignment of fast and medium CVD
+medium_bullish = bullish_ob and 
+                 cvd_fast_momentum > 0 and 
+                 cvd_medium_momentum > 0 and
+                 not strong_bullish
+
+medium_bearish = bearish_ob and 
+                 cvd_fast_momentum < 0 and 
+                 cvd_medium_momentum < 0 and
+                 not strong_bearish
+
+// =================== Visualization ===================
+// Order Block Zones
+bgcolor(show_ob_zones ? 
+        (strong_bullish ? color.new(color.green, ob_zone_transp) :
+         medium_bullish ? color.new(color.green, ob_zone_transp + 10) :
+         strong_bearish ? color.new(color.red, ob_zone_transp) :
+         medium_bearish ? color.new(color.red, ob_zone_transp + 10) : na) : na)
+
+// Strong Signals
+plotshape(strong_bullish, "Strong Bullish", shape.triangleup, location.belowbar, 
+         color.new(color.green, 0), size=size.normal)
+plotshape(strong_bearish, "Strong Bearish", shape.triangledown, location.abovebar, 
+         color.new(color.red, 0), size=size.normal)
+
+// Medium Signals
+plotshape(medium_bullish, "Medium Bullish", shape.triangleup, location.belowbar, 
+         color.new(color.green, 40), size=size.small)
+plotshape(medium_bearish, "Medium Bearish", shape.triangledown, location.abovebar, 
+         color.new(color.red, 40), size=size.small)
+
+// Plot SMAs for reference (optional)
+plot(price_fast_sma, "Fast Price SMA", color=color.new(color.blue, 50), linewidth=1)
+plot(price_slow_sma, "Slow Price SMA", color=color.new(color.purple, 50), linewidth=1) 
