@@ -1,0 +1,53 @@
+//@version=6
+indicator("Basic CVD with Order Blocks", overlay=true)
+
+// =================== Input Parameters ===================
+// CVD Parameters
+cvd_length = input.int(20, "CVD Length", minval=1, maxval=100)
+ob_lookback = input.int(10, "Order Block Lookback", minval=1, maxval=50)
+show_ob_zones = input.bool(true, "Show Order Block Zones", inline="zones")
+ob_zone_transp = input.int(70, "Zone Transparency", minval=0, maxval=100, inline="zones")
+
+// =================== CVD Calculations ===================
+// Basic CVD using volume and price movement
+cvd = ta.cum(volume * (close - open))
+cvd_sma = ta.sma(cvd, cvd_length)
+
+// CVD Momentum
+cvd_momentum = cvd - cvd_sma
+
+// =================== Order Block Detection ===================
+// Identify potential order blocks using price action
+atr = ta.atr(14)
+candle_size = high - low
+is_significant_candle = candle_size > (atr * 1.2)  // Candle larger than 120% of ATR
+
+// Bullish Order Block: Strong bullish candle followed by downward movement
+bullish_ob = is_significant_candle and close > open and high[1] > high[2] and low[1] < low
+bullish_ob_price = high[1]
+
+// Bearish Order Block: Strong bearish candle followed by upward movement
+bearish_ob = is_significant_candle and close < open and low[1] < low[2] and high[1] > high
+bearish_ob_price = low[1]
+
+// =================== Combined Signals ===================
+// Bullish Signal: CVD strength near bullish order block
+bullish_signal = bullish_ob and cvd_momentum > 0
+
+// Bearish Signal: CVD weakness near bearish order block
+bearish_signal = bearish_ob and cvd_momentum < 0
+
+// =================== Visualization ===================
+// Plot Order Block Zones
+if show_ob_zones
+    bgcolor(bullish_ob ? color.new(color.green, ob_zone_transp) : na)
+    bgcolor(bearish_ob ? color.new(color.red, ob_zone_transp) : na)
+
+// Plot Signals
+plotshape(bullish_signal, "Bullish Signal", shape.triangleup, location.belowbar, 
+         color.new(color.green, 0), size=size.small)
+plotshape(bearish_signal, "Bearish Signal", shape.triangledown, location.abovebar, 
+         color.new(color.red, 0), size=size.small)
+
+// Plot CVD
+plot(cvd_momentum, "CVD Momentum", color=color.blue, style=plot.style_line, display=display.none) 
