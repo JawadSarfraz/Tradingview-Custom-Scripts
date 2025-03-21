@@ -82,17 +82,19 @@ if bearish_signal and strategy.position_size == 0
     strategy.entry("Short", strategy.short)
 
 // Exit Conditions
+// Long Exit Logic
 if strategy.position_size > 0
-    strategy.exit("Long Exit", "Long", 
-                 stop=long_sl, 
-                 limit=long_tp, 
-                 when=bars_held >= max_pos_hold)
+    if bars_held >= max_pos_hold
+        strategy.close("Long", comment="Max Bars Exit")
+    else
+        strategy.exit("Long TP/SL", "Long", limit=long_tp, stop=long_sl)
 
+// Short Exit Logic
 if strategy.position_size < 0
-    strategy.exit("Short Exit", "Short", 
-                 stop=short_sl, 
-                 limit=short_tp, 
-                 when=bars_held >= max_pos_hold)
+    if bars_held >= max_pos_hold
+        strategy.close("Short", comment="Max Bars Exit")
+    else
+        strategy.exit("Short TP/SL", "Short", limit=short_tp, stop=short_sl)
 
 // =================== Performance Metrics ===================
 var int total_trades = 0
