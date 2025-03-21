@@ -58,11 +58,19 @@ long_tp = trade_direction > 0 ? entry_price * (1 + tp_mult/100) : na
 short_sl = trade_direction < 0 ? entry_price * (1 + sl_mult/100) : na
 short_tp = trade_direction < 0 ? entry_price * (1 - tp_mult/100) : na
 
-// =================== Trade Management ===================
+// =================== Enhanced Performance Tracking ===================
 var int total_trades = 0
 var int winning_trades = 0
+var int losing_trades = 0
+var float total_profit_pct = 0.0
+var float total_loss_pct = 0.0
+var float largest_win = 0.0
+var float largest_loss = 0.0
+var float current_streak = 0
+var float best_streak = 0
+var float worst_streak = 0
 var float max_drawdown = 0.0
-var float peak_balance = 0.0
+var float peak_balance = initial_capital
 var float current_balance = initial_capital
 var float current_profit = 0.0
 
@@ -95,16 +103,30 @@ if exit_long or exit_short
         (close - entry_price) / entry_price * 100 :
         (entry_price - close) / entry_price * 100
     
-    current_balance := current_balance * (1 + current_profit * position_pct/10000)  // Adjusted for position percentage
-    winning_trades := winning_trades + (current_profit > 0 ? 1 : 0)
+    // Update performance metrics
+    if current_profit > 0
+        winning_trades := winning_trades + 1
+        total_profit_pct := total_profit_pct + current_profit
+        largest_win := math.max(largest_win, current_profit)
+        current_streak := math.max(0, current_streak + 1)
+    else
+        losing_trades := losing_trades + 1
+        total_loss_pct := total_loss_pct + current_profit
+        largest_loss := math.min(largest_loss, current_profit)
+        current_streak := math.min(0, current_streak - 1)
+    
+    best_streak := math.max(best_streak, current_streak)
+    worst_streak := math.min(worst_streak, current_streak)
+    
+    // Update balance
+    current_balance := current_balance * (1 + current_profit * position_pct/10000)
+    peak_balance := math.max(peak_balance, current_balance)
+    max_drawdown := math.max(max_drawdown, (peak_balance - current_balance) / peak_balance * 100)
+    
     trade_direction := 0
     bars_held := 0
 
-// Calculate running maximum drawdown
-peak_balance := math.max(peak_balance, current_balance)
-max_drawdown := math.max(max_drawdown, (peak_balance - current_balance) / peak_balance * 100)
-
-// =================== Visualization ===================
+// =================== Enhanced Visualization ===================
 // Plot signals
 plotshape(bullish_signal, "Bullish Signal", shape.triangleup, location.belowbar, 
          color.new(color.green, 0), size=size.small)
@@ -117,11 +139,44 @@ plot(long_tp, "Long TP", color=color.new(color.green, 50), style=plot.style_line
 plot(short_sl, "Short SL", color=color.new(color.red, 50), style=plot.style_linebr)
 plot(short_tp, "Short TP", color=color.new(color.green, 50), style=plot.style_linebr)
 
-// Display performance metrics
-var table stats = table.new(position.top_right, 5, 4, color.black, color.white, 1, color.gray, 1)
+// Display enhanced performance metrics
+var table stats = table.new(position.top_right, 6, 8, color.black, color.white, 1, color.gray, 1)
 if barstate.islast
     win_rate = total_trades > 0 ? (winning_trades / total_trades) * 100 : 0.0
-    table.cell(stats, 0, 0, "Performance Metrics", bgcolor=color.blue)
-    table.cell(stats, 0, 1, "Total Trades: " + str.tostring(total_trades))
-    table.cell(stats, 0, 2, "Win Rate: " + str.tostring(math.round(win_rate, 2)) + "%")
-    table.cell(stats, 0, 3, "Max Drawdown: " + str.tostring(math.round(max_drawdown, 2)) + "%") 
+    avg_win = winning_trades > 0 ? total_profit_pct / winning_trades : 0.0
+    avg_loss = losing_trades > 0 ? total_loss_pct / losing_trades : 0.0
+    profit_factor = math.abs(avg_loss) > 0 ? math.abs(avg_win / avg_loss) : 0.0
+    
+    // Header
+    table.cell(stats, 0, 0, "Performance Metrics", bgcolor=color.blue, text_color=color.white)
+    table.cell(stats, 1, 0, "Value", bgcolor=color.blue, text_color=color.white)
+    table.cell(stats, 2, 0, "Percentage", bgcolor=color.blue, text_color=color.white)
+    
+    // Trade Statistics
+    table.cell(stats, 0, 1, "Total Trades")
+    table.cell(stats, 1, 1, str.tostring(total_trades))
+    
+    table.cell(stats, 0, 2, "Winning Trades")
+    table.cell(stats, 1, 2, str.tostring(winning_trades))
+    table.cell(stats, 2, 2, str.tostring(math.round(win_rate, 2)) + "%")
+    
+    table.cell(stats, 0, 3, "Losing Trades")
+    table.cell(stats, 1, 3, str.tostring(losing_trades))
+    table.cell(stats, 2, 3, str.tostring(math.round(100 - win_rate, 2)) + "%")
+    
+    // Profit Statistics
+    table.cell(stats, 0, 4, "Avg Win/Loss", bgcolor=color.new(color.blue, 90))
+    table.cell(stats, 1, 4, str.tostring(math.round(avg_win, 2)) + "%", bgcolor=color.new(color.green, 90))
+    table.cell(stats, 2, 4, str.tostring(math.round(avg_loss, 2)) + "%", bgcolor=color.new(color.red, 90))
+    
+    // Additional Metrics
+    table.cell(stats, 0, 5, "Best/Worst", bgcolor=color.new(color.blue, 90))
+    table.cell(stats, 1, 5, str.tostring(math.round(largest_win, 2)) + "%", bgcolor=color.new(color.green, 90))
+    table.cell(stats, 2, 5, str.tostring(math.round(largest_loss, 2)) + "%", bgcolor=color.new(color.red, 90))
+    
+    // Account Statistics
+    table.cell(stats, 0, 6, "Profit Factor")
+    table.cell(stats, 1, 6, str.tostring(math.round(profit_factor, 2)))
+    
+    table.cell(stats, 0, 7, "Max Drawdown")
+    table.cell(stats, 1, 7, str.tostring(math.round(max_drawdown, 2)) + "%") 
