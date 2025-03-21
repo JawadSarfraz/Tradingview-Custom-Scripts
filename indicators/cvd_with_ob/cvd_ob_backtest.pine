@@ -143,30 +143,30 @@ plot(short_tp, "Short TP", color=color.new(color.green, 50), style=plot.style_li
 var table stats = table.new(position.top_right, 3, 5, border_width=1)
 if barstate.islast
     // Headers with light blue background
-    table.cell(stats, 0, 0, "Performance Metrics", bgcolor=color.new(#66B2FF, 20), text_color=color.white)
-    table.cell(stats, 1, 0, "Value", bgcolor=color.new(#66B2FF, 20), text_color=color.white)
-    table.cell(stats, 2, 0, "Percentage", bgcolor=color.new(#66B2FF, 20), text_color=color.white)
+    table.cell(stats, 0, 0, "Performance Metrics", bgcolor=color.new(#66B2FF, 20), text_color=color.black)
+    table.cell(stats, 1, 0, "Value", bgcolor=color.new(#66B2FF, 20), text_color=color.black)
+    table.cell(stats, 2, 0, "Percentage", bgcolor=color.new(#66B2FF, 20), text_color=color.black)
     
     // Trade Statistics with alternating light backgrounds
-    table.cell(stats, 0, 1, "Total Trades", bgcolor=color.new(#2962FF, 90), text_color=color.white)
-    table.cell(stats, 1, 1, str.tostring(total_trades), bgcolor=color.new(#2962FF, 90), text_color=color.white)
-    table.cell(stats, 2, 1, "100%", bgcolor=color.new(#2962FF, 90), text_color=color.white)
+    table.cell(stats, 0, 1, "Total Trades", bgcolor=color.new(#2962FF, 90), text_color=color.black)
+    table.cell(stats, 1, 1, str.tostring(total_trades), bgcolor=color.new(#2962FF, 90), text_color=color.black)
+    table.cell(stats, 2, 1, "100%", bgcolor=color.new(#2962FF, 90), text_color=color.black)
     
-    table.cell(stats, 0, 2, "Winning Trades", bgcolor=color.new(#00C853, 90), text_color=color.white)
-    table.cell(stats, 1, 2, str.tostring(winning_trades), bgcolor=color.new(#00C853, 90), text_color=color.white)
+    table.cell(stats, 0, 2, "Winning Trades", bgcolor=color.new(#00C853, 90), text_color=color.black)
+    table.cell(stats, 1, 2, str.tostring(winning_trades), bgcolor=color.new(#00C853, 90), text_color=color.black)
     win_rate = total_trades > 0 ? (winning_trades / total_trades) * 100 : 0
-    table.cell(stats, 2, 2, str.tostring(math.round(win_rate, 2)) + "%", bgcolor=color.new(#00C853, 90), text_color=color.white)
+    table.cell(stats, 2, 2, str.tostring(math.round(win_rate, 2)) + "%", bgcolor=color.new(#00C853, 90), text_color=color.black)
     
-    table.cell(stats, 0, 3, "Losing Trades", bgcolor=color.new(#FF1744, 90), text_color=color.white)
-    table.cell(stats, 1, 3, str.tostring(losing_trades), bgcolor=color.new(#FF1744, 90), text_color=color.white)
+    table.cell(stats, 0, 3, "Losing Trades", bgcolor=color.new(#FF1744, 90), text_color=color.black)
+    table.cell(stats, 1, 3, str.tostring(losing_trades), bgcolor=color.new(#FF1744, 90), text_color=color.black)
     loss_rate = total_trades > 0 ? (losing_trades / total_trades) * 100 : 0
-    table.cell(stats, 2, 3, str.tostring(math.round(loss_rate, 2)) + "%", bgcolor=color.new(#FF1744, 90), text_color=color.white)
+    table.cell(stats, 2, 3, str.tostring(math.round(loss_rate, 2)) + "%", bgcolor=color.new(#FF1744, 90), text_color=color.black)
     
     // Balance info with gold background
-    table.cell(stats, 0, 4, "Current Balance", bgcolor=color.new(#FFB300, 90), text_color=color.white)
-    table.cell(stats, 1, 4, str.tostring(math.round(current_balance, 2)), bgcolor=color.new(#FFB300, 90), text_color=color.white)
+    table.cell(stats, 0, 4, "Current Balance", bgcolor=color.new(#FFB300, 90), text_color=color.black)
+    table.cell(stats, 1, 4, str.tostring(math.round(current_balance, 2)), bgcolor=color.new(#FFB300, 90), text_color=color.black)
     balance_change = ((current_balance - initial_capital) / initial_capital) * 100
-    table.cell(stats, 2, 4, str.tostring(math.round(balance_change, 2)) + "%", bgcolor=color.new(#FFB300, 90), text_color=color.white)
+    table.cell(stats, 2, 4, str.tostring(math.round(balance_change, 2)) + "%", bgcolor=color.new(#FFB300, 90), text_color=color.black)
 
 // =================== Additional Metrics ===================
 // Additional metrics can be added here if needed 
