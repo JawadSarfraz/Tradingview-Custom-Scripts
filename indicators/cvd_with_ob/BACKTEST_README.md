@@ -4,7 +4,7 @@ A comprehensive backtesting implementation for the CVD-OB (Cumulative Volume Del
 
 ## Strategy Overview
 
-This backtesting script implements a systematic trading approach combining CVD momentum with Order Block detection, now featuring enhanced performance metrics and trade management.
+This backtesting script implements a systematic trading approach combining CVD momentum with Order Block detection, featuring enhanced performance metrics and trade management.
 
 ### Core Components
 
@@ -23,10 +23,10 @@ This backtesting script implements a systematic trading approach combining CVD m
    - Automated trade management
 
 3. **Performance Analytics**
-   - Comprehensive trade statistics
-   - Detailed profit/loss tracking
-   - Streak and drawdown monitoring
-   - Real-time balance updates
+   - Real-time performance tracking
+   - Color-coded metrics visualization
+   - Trade statistics and balance monitoring
+   - Risk-adjusted returns calculation
 
 ### Parameters
 
@@ -41,30 +41,37 @@ This backtesting script implements a systematic trading approach combining CVD m
 | ATR Length      | 14      | ATR period for volatility measure |
 | OB Threshold    | 1.2     | Order Block ATR multiplier        |
 
-## Enhanced Performance Metrics
+## Performance Metrics Display
 
-The strategy now tracks several advanced performance indicators:
+The strategy features an enhanced visual performance metrics table:
 
-1. **Trade Statistics**
+### 1. Table Layout
 
-   - Total number of trades
-   - Win rate percentage
-   - Average win/loss size
-   - Largest win and loss
-   - Current and best/worst streaks
+- **Header Row** (Light Blue Background)
 
-2. **Risk Metrics**
+  - Performance Metrics | Value | Percentage
 
-   - Maximum drawdown
-   - Peak balance tracking
-   - Current balance monitoring
-   - Risk-adjusted returns
+- **Trade Statistics** (Color-Coded)
+  - Total Trades (Light Blue)
+  - Winning Trades (Light Green)
+  - Losing Trades (Light Red)
+  - Current Balance (Light Gold)
 
-3. **Visual Feedback**
-   - Entry/exit signals
-   - Stop-loss/take-profit levels
-   - Performance metrics table
-   - Balance and drawdown chart
+### 2. Color Scheme
+
+- Headers: Light Blue (#66B2FF, 20% transparency)
+- Total Trades: Blue (#2962FF, 90% transparency)
+- Winning Trades: Green (#00C853, 90% transparency)
+- Losing Trades: Red (#FF1744, 90% transparency)
+- Balance Info: Gold (#FFB300, 90% transparency)
+- Text: Black for maximum readability
+
+### 3. Metrics Displayed
+
+- Trade counts and percentages
+- Win/loss ratios
+- Current balance and change
+- Real-time performance updates
 
 ## Usage Guide
 
@@ -83,10 +90,10 @@ The strategy now tracks several advanced performance indicators:
    - Calibrate ATR multiplier for volatility
 
 3. **Performance Analysis**
-   - Monitor win rate and profit factor
-   - Track drawdown for risk assessment
-   - Analyze trade duration patterns
-   - Evaluate position sizing effectiveness
+   - Monitor color-coded metrics table
+   - Track win rate and balance changes
+   - Analyze trade patterns
+   - Evaluate strategy effectiveness
 
 ## Future Improvements
 
@@ -108,7 +115,7 @@ The strategy now tracks several advanced performance indicators:
 - Uses percentage-based position sizing for consistent risk
 - Implements automatic trade management with R-multiple targets
 - Tracks comprehensive performance metrics in real-time
-- Provides detailed visual feedback for analysis
+- Provides clear visual feedback through color-coded display
 
 ## Best Practices
 
@@ -137,14 +144,21 @@ Areas for contribution:
 
 ## Version History
 
-### Latest Version (2.0)
+### Latest Version (2.1)
+
+- Enhanced performance metrics visualization
+- Improved color scheme for better readability
+- Added real-time balance tracking
+- Optimized table layout and formatting
+
+### Previous Version (2.0)
 
 - Added enhanced performance metrics
 - Implemented percentage-based position sizing
 - Added comprehensive trade tracking
 - Improved visual feedback system
 
-### Previous Version (1.0)
+### Initial Version (1.0)
 
 - Basic CVD-OB implementation
 - Simple trade tracking
