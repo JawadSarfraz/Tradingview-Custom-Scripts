@@ -1,7 +1,11 @@
 //@version=6
-strategy("CVD-OB Basic Backtest", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+indicator("CVD-OB Basic Backtest [Strategy]", overlay=true)
 
 // =================== Input Parameters ===================
+// Strategy Parameters
+var float initial_capital = 10000.0
+var float position_size = 100.0
+
 // CVD Parameters
 cvd_length = input.int(20, "CVD Length", minval=1, maxval=100)
 
@@ -40,76 +44,65 @@ bearish_signal = bearish_ob and cvd_momentum < 0
 var float entry_price = na
 var int bars_held = 0
 var float risk_amount = na
+var int position_size = 0  // 1 for long, -1 for short, 0 for no position
 
 // Update bars held counter
-if strategy.position_size != 0
+if position_size != 0
     bars_held := bars_held + 1
 else
     bars_held := 0
 
 // Calculate stop loss and take profit levels
-long_sl = if strategy.position_size > 0
-    entry_price * (1 - sl_mult/100)
-else
-    na
+long_sl = position_size > 0 ? entry_price * (1 - sl_mult/100) : na
+long_tp = position_size > 0 ? entry_price * (1 + tp_mult/100) : na
+short_sl = position_size < 0 ? entry_price * (1 + sl_mult/100) : na
+short_tp = position_size < 0 ? entry_price * (1 - tp_mult/100) : na
 
-long_tp = if strategy.position_size > 0
-    entry_price * (1 + tp_mult/100)
-else
-    na
-
-short_sl = if strategy.position_size < 0
-    entry_price * (1 + sl_mult/100)
-else
-    na
-
-short_tp = if strategy.position_size < 0
-    entry_price * (1 - tp_mult/100)
-else
-    na
-
-// =================== Strategy Execution ===================
-// Long Entry
-if bullish_signal and strategy.position_size == 0
-    entry_price := close
-    risk_amount := atr
-    strategy.entry("Long", strategy.long)
-
-// Short Entry
-if bearish_signal and strategy.position_size == 0
-    entry_price := close
-    risk_amount := atr
-    strategy.entry("Short", strategy.short)
-
-// Exit Conditions
-// Long Exit Logic
-if strategy.position_size > 0
-    if bars_held >= max_pos_hold
-        strategy.close("Long", comment="Max Bars Exit")
-    else
-        strategy.exit("Long TP/SL", "Long", limit=long_tp, stop=long_sl)
-
-// Short Exit Logic
-if strategy.position_size < 0
-    if bars_held >= max_pos_hold
-        strategy.close("Short", comment="Max Bars Exit")
-    else
-        strategy.exit("Short TP/SL", "Short", limit=short_tp, stop=short_sl)
-
-// =================== Performance Metrics ===================
+// =================== Trade Management ===================
 var int total_trades = 0
 var int winning_trades = 0
 var float max_drawdown = 0.0
 var float peak_balance = 0.0
+var float current_balance = initial_capital
+var float current_profit = 0.0
 
-// Update metrics on closed trades
-if strategy.closedtrade.size != 0
+// Entry Logic
+if bullish_signal and position_size == 0
+    entry_price := close
+    risk_amount := atr
+    position_size := 1
     total_trades := total_trades + 1
-    winning_trades := winning_trades + (strategy.closedtrade.profit > 0 ? 1 : 0)
+
+if bearish_signal and position_size == 0
+    entry_price := close
+    risk_amount := atr
+    position_size := -1
+    total_trades := total_trades + 1
+
+// Exit Logic
+exit_long = position_size > 0 and (
+    close <= long_sl or 
+    close >= long_tp or 
+    bars_held >= max_pos_hold)
+
+exit_short = position_size < 0 and (
+    close >= short_sl or 
+    close <= short_tp or 
+    bars_held >= max_pos_hold)
+
+if exit_long or exit_short
+    current_profit := position_size > 0 ? 
+        (close - entry_price) / entry_price * 100 :
+        (entry_price - close) / entry_price * 100
+    
+    current_balance := current_balance * (1 + current_profit/100)
+    winning_trades := winning_trades + (current_profit > 0 ? 1 : 0)
+    position_size := 0
+    bars_held := 0
 
 // Calculate running maximum drawdown
-peak_balance := math.max(peak_balance, strategy.equity)
-max_drawdown := math.max(max_drawdown, (peak_balance - strategy.equity) / peak_balance * 100)
+peak_balance := math.max(peak_balance, current_balance)
+max_drawdown := math.max(max_drawdown, (peak_balance - current_balance) / peak_balance * 100)
 
 // =================== Visualization ===================
 // Plot signals
