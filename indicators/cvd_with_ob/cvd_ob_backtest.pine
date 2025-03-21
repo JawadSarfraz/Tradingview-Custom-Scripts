@@ -4,7 +4,7 @@ indicator("CVD-OB Basic Backtest [Strategy]", overlay=true)
 // =================== Input Parameters ===================
 // Strategy Parameters
 var float initial_capital = 10000.0
-var float position_size = 100.0
+var float position_pct = 100.0  // Renamed from position_size to position_pct
 
 // CVD Parameters
 cvd_length = input.int(20, "CVD Length", minval=1, maxval=100)
@@ -44,19 +44,19 @@ bearish_signal = bearish_ob and cvd_momentum < 0
 var float entry_price = na
 var int bars_held = 0
 var float risk_amount = na
-var int position_size = 0  // 1 for long, -1 for short, 0 for no position
+var int trade_direction = 0  // Renamed from position_size: 1 for long, -1 for short, 0 for no position
 
 // Update bars held counter
-if position_size != 0
+if trade_direction != 0
     bars_held := bars_held + 1
 else
     bars_held := 0
 
 // Calculate stop loss and take profit levels
-long_sl = position_size > 0 ? entry_price * (1 - sl_mult/100) : na
-long_tp = position_size > 0 ? entry_price * (1 + tp_mult/100) : na
-short_sl = position_size < 0 ? entry_price * (1 + sl_mult/100) : na
-short_tp = position_size < 0 ? entry_price * (1 - tp_mult/100) : na
+long_sl = trade_direction > 0 ? entry_price * (1 - sl_mult/100) : na
+long_tp = trade_direction > 0 ? entry_price * (1 + tp_mult/100) : na
+short_sl = trade_direction < 0 ? entry_price * (1 + sl_mult/100) : na
+short_tp = trade_direction < 0 ? entry_price * (1 - tp_mult/100) : na
 
 // =================== Trade Management ===================
 var int total_trades = 0
@@ -67,37 +67,37 @@ var float current_balance = initial_capital
 var float current_profit = 0.0
 
 // Entry Logic
-if bullish_signal and position_size == 0
+if bullish_signal and trade_direction == 0
     entry_price := close
     risk_amount := atr
-    position_size := 1
+    trade_direction := 1
     total_trades := total_trades + 1
 
-if bearish_signal and position_size == 0
+if bearish_signal and trade_direction == 0
     entry_price := close
     risk_amount := atr
-    position_size := -1
+    trade_direction := -1
     total_trades := total_trades + 1
 
 // Exit Logic
-exit_long = position_size > 0 and (
+exit_long = trade_direction > 0 and (
     close <= long_sl or 
     close >= long_tp or 
     bars_held >= max_pos_hold)
 
-exit_short = position_size < 0 and (
+exit_short = trade_direction < 0 and (
     close >= short_sl or 
     close <= short_tp or 
     bars_held >= max_pos_hold)
 
 if exit_long or exit_short
-    current_profit := position_size > 0 ? 
+    current_profit := trade_direction > 0 ? 
         (close - entry_price) / entry_price * 100 :
         (entry_price - close) / entry_price * 100
     
-    current_balance := current_balance * (1 + current_profit/100)
+    current_balance := current_balance * (1 + current_profit * position_pct/10000)  // Adjusted for position percentage
     winning_trades := winning_trades + (current_profit > 0 ? 1 : 0)
-    position_size := 0
+    trade_direction := 0
     bars_held := 0
 
 // Calculate running maximum drawdown
