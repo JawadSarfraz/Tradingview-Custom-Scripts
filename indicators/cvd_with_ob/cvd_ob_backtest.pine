@@ -1,4 +1,4 @@
-//@version=5
+//@version=6
 strategy("CVD-OB Basic Backtest", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
 // =================== Input Parameters ===================
