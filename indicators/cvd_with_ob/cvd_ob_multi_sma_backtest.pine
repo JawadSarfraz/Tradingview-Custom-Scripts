@@ -197,5 +197,4 @@ if barstate.islast
     table.cell(stats, 0, 4, "Current Balance", bgcolor=color.new(#FFB300, 90), text_color=color.black)
     table.cell(stats, 1, 4, str.tostring(math.round(current_balance, 2)), bgcolor=color.new(#FFB300, 90), text_color=color.black)
     balance_change = ((current_balance - initial_capital) / initial_capital) * 100
-    table.cell(stats, 2, 4, str.tostring(math.round(balance_change, 2)) + "%", bgcolor=color.new(#FFB300, 90), text_color=color.black)
-``` 
+    table.cell(stats, 2, 4, str.tostring(math.round(balance_change, 2)) + "%", bgcolor=color.new(#FFB300, 90), text_color=color.black) 
