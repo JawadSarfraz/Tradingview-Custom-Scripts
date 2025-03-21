@@ -13,6 +13,9 @@ A collection of custom TradingView Pine Scripts for technical analysis, market i
 | **CVD Divergences R-Multiple Backtest (RSI)**       | Enhanced backtest version incorporating RSI confirmation for improved signal quality and performance tracking.                                      |
 | **Filtered Bullish Fair Value Gaps**                | Highlights strong **FVG zones** to spot potential trade setups.                                                                                     |
 | **Bullish Order Block Finder (V1)**                 | Detects **Bullish Order Blocks** with volume confirmation.                                                                                          |
+| **CVD with Order Blocks Basic**                     | Combines CVD analysis with Order Block detection for enhanced signal generation.                                                                    |
+| **CVD-OB Multi-SMA Analysis**                       | Advanced version using multiple SMAs for refined signal generation and trend confirmation.                                                          |
+| **CVD-OB Backtest Strategy**                        | Comprehensive backtesting implementation with detailed performance metrics and trade management.                                                    |
 
 ---
 
@@ -284,5 +287,77 @@ A streamlined version of the CVD divergence script that uses Exponential Moving 
 ```
 indicators/cvd/cvd_divergence_rmultiple_ema_backtest.pine
 ```
+
+---
+
+### **📊 CVD with Order Blocks Backtest Strategy**
+
+🚀 **Advanced Backtesting System for CVD-OB Strategy**
+
+### 🔹 **Features:**
+
+- **Enhanced Performance Tracking:**
+
+  - Total trades with win/loss statistics
+  - Detailed profit/loss percentages
+  - Largest win/loss tracking
+  - Current and best/worst streaks
+  - Maximum drawdown monitoring
+  - Real-time balance updates
+
+- **Position Management:**
+
+  - Percentage-based position sizing
+  - Dynamic stop-loss and take-profit levels
+  - Maximum position hold time
+  - Automated trade execution and exit
+
+- **Signal Generation:**
+  - CVD momentum analysis
+  - Order Block detection with ATR filtering
+  - Combined signal confirmation
+  - Trend alignment checks
+
+### 📈 **Parameters:**
+
+- **Strategy Settings:**
+
+  - Initial capital: 10,000 units
+  - Position size: Configurable percentage
+  - CVD Length: 20 periods (adjustable)
+
+- **Risk Management:**
+  - Take Profit: 2.0× risk (adjustable)
+  - Stop Loss: 1.0× risk (adjustable)
+  - Maximum hold time: 20 bars
+
+### 🎯 **Performance Metrics:**
+
+- **Trade Statistics:**
+
+  - Total trades executed
+  - Winning vs losing trades
+  - Win rate percentage
+  - Average win/loss size
+
+- **Risk Metrics:**
+
+  - Maximum drawdown
+  - Best/worst trade
+  - Winning/losing streaks
+  - Current balance tracking
+
+- **Visual Feedback:**
+  - Entry/exit signals
+  - Stop-loss/take-profit levels
+  - Performance metrics table
+  - Balance and drawdown tracking
+
+✅ **Best Used With:**
+
+- Multiple timeframe analysis
+- Volume confirmation
+- Market structure alignment
+- Trend direction validation
 
 ---
