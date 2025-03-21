@@ -102,8 +102,8 @@ var int winning_trades = 0
 var float max_drawdown = 0.0
 var float peak_balance = 0.0
 
-// Update metrics
-if strategy.closedtrade
+// Update metrics on closed trades
+if strategy.closedtrade.size != 0
     total_trades := total_trades + 1
     winning_trades := winning_trades + (strategy.closedtrade.profit > 0 ? 1 : 0)
 
