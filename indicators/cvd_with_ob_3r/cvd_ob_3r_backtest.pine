@@ -1,0 +1,195 @@
+//@version=6
+indicator("CVD-OB 3R Backtest", overlay=true)
+
+// =================== Input Parameters ===================
+// Strategy Parameters
+var float initial_capital = 10000.0
+var float position_pct = 100.0
+
+// CVD SMA Parameters
+cvd_fast_length = input.int(10, "CVD Fast SMA", minval=1, maxval=50, group="CVD SMAs")
+cvd_medium_length = input.int(21, "CVD Medium SMA", minval=1, maxval=100, group="CVD SMAs")
+cvd_slow_length = input.int(50, "CVD Slow SMA", minval=1, maxval=200, group="CVD SMAs")
+
+// Price SMA Parameters
+price_fast_length = input.int(10, "Price Fast SMA", minval=1, maxval=50, group="Price SMAs")
+price_slow_length = input.int(21, "Price Slow SMA", minval=1, maxval=100, group="Price SMAs")
+
+// Risk Management - 3:1 Ratio
+tp_mult = input.float(3.0, "Take Profit Multiple", minval=0.5, step=0.1, group="Risk Management")
+sl_mult = input.float(1.0, "Stop Loss Multiple", minval=0.1, step=0.1, group="Risk Management")
+max_pos_hold = input.int(20, "Maximum Position Hold Bars", minval=1, group="Risk Management")
+
+// =================== CVD Calculations ===================
+// Basic CVD
+cvd = ta.cum(volume * (close - open))
+
+// Multiple CVD SMAs
+cvd_fast_sma = ta.sma(cvd, cvd_fast_length)
+cvd_medium_sma = ta.sma(cvd, cvd_medium_length)
+cvd_slow_sma = ta.sma(cvd, cvd_slow_length)
+
+// CVD Momentum using multiple timeframes
+cvd_fast_momentum = cvd - cvd_fast_sma
+cvd_medium_momentum = cvd - cvd_medium_sma
+cvd_slow_momentum = cvd - cvd_slow_sma
+
+// =================== Price SMAs ===================
+price_fast_sma = ta.sma(close, price_fast_length)
+price_slow_sma = ta.sma(close, price_slow_length)
+
+// Price momentum and trend
+price_momentum = price_fast_sma - price_slow_sma
+uptrend = price_fast_sma > price_slow_sma
+downtrend = price_fast_sma < price_slow_sma
+
+// =================== Order Block Detection ===================
+atr = ta.atr(14)
+candle_size = high - low
+is_significant_candle = candle_size > (atr * 1.2)
+
+// Bullish Order Block: Strong bullish candle followed by downward movement
+bullish_ob = is_significant_candle and close > open and high[1] > high[2] and low[1] < low
+bullish_ob_price = high[1]
+
+// Bearish Order Block: Strong bearish candle followed by upward movement
+bearish_ob = is_significant_candle and close < open and low[1] < low[2] and high[1] > high
+bearish_ob_price = low[1]
+
+// =================== Signal Generation ===================
+// Strong signals require alignment of all SMAs
+strong_bullish = cvd_fast_momentum > 0 and cvd_medium_momentum > 0 and cvd_slow_momentum > 0 and uptrend
+strong_bearish = cvd_fast_momentum < 0 and cvd_medium_momentum < 0 and cvd_slow_momentum < 0 and downtrend
+
+// Medium signals require alignment of fast and medium SMAs
+medium_bullish = cvd_fast_momentum > 0 and cvd_medium_momentum > 0 and uptrend
+medium_bearish = cvd_fast_momentum < 0 and cvd_medium_momentum < 0 and downtrend
+
+// Combined signals with Order Blocks
+bullish_signal = (strong_bullish or medium_bullish) and bullish_ob
+bearish_signal = (strong_bearish or medium_bearish) and bearish_ob
+
+// =================== Position Management ===================
+var float entry_price = na
+var int bars_held = 0
+var float risk_amount = na
+var int trade_direction = 0  // 1 for long, -1 for short, 0 for no position
+
+// Update bars held counter
+if trade_direction != 0
+    bars_held := bars_held + 1
+else
+    bars_held := 0
+
+// Calculate stop loss and take profit levels with 3:1 ratio
+long_sl = trade_direction > 0 ? entry_price * (1 - sl_mult/100) : na
+long_tp = trade_direction > 0 ? entry_price * (1 + tp_mult/100) : na
+short_sl = trade_direction < 0 ? entry_price * (1 + sl_mult/100) : na
+short_tp = trade_direction < 0 ? entry_price * (1 - tp_mult/100) : na
+
+// =================== Performance Tracking ===================
+var int total_trades = 0
+var int winning_trades = 0
+var int losing_trades = 0
+var float total_profit_pct = 0.0
+var float total_loss_pct = 0.0
+var float largest_win = 0.0
+var float largest_loss = 0.0
+var float current_streak = 0
+var float best_streak = 0
+var float worst_streak = 0
+var float max_drawdown = 0.0
+var float peak_balance = initial_capital
+var float current_balance = initial_capital
+var float current_profit = 0.0
+
+// =================== Trade Logic ===================
+// Entry Logic
+if trade_direction == 0
+    if bullish_signal
+        trade_direction := 1
+        entry_price := close
+        bars_held := 0
+        total_trades := total_trades + 1
+    else if bearish_signal
+        trade_direction := -1
+        entry_price := close
+        bars_held := 0
+        total_trades := total_trades + 1
+
+// Exit Logic
+exit_long = trade_direction > 0 and (close <= long_sl or close >= long_tp or bars_held >= max_pos_hold)
+exit_short = trade_direction < 0 and (close >= short_sl or close <= short_tp or bars_held >= max_pos_hold)
+
+// Update performance metrics on exit
+if exit_long or exit_short
+    current_profit := trade_direction > 0 ? 
+        ((close - entry_price) / entry_price) * 100 : 
+        ((entry_price - close) / entry_price) * 100
+    
+    if current_profit > 0
+        winning_trades := winning_trades + 1
+        total_profit_pct := total_profit_pct + current_profit
+        largest_win := math.max(largest_win, current_profit)
+        current_streak := current_streak + 1
+        best_streak := math.max(best_streak, current_streak)
+        worst_streak := 0
+    else
+        losing_trades := losing_trades + 1
+        total_loss_pct := total_loss_pct + math.abs(current_profit)
+        largest_loss := math.min(largest_loss, current_profit)
+        current_streak := current_streak - 1
+        worst_streak := math.min(worst_streak, current_streak)
+        best_streak := 0
+    
+    // Update balance
+    current_balance := current_balance * (1 + current_profit * position_pct/10000)
+    max_drawdown := math.min(max_drawdown, ((current_balance - peak_balance) / peak_balance) * 100)
+    peak_balance := math.max(peak_balance, current_balance)
+    
+    // Reset position
+    trade_direction := 0
+    entry_price := na
+    bars_held := 0
+
+// =================== Visualization ===================
+// Plot signals
+plotshape(bullish_signal, "Bullish Signal", shape.triangleup, location.belowbar, 
+         color.new(color.green, 0), size=size.small)
+plotshape(bearish_signal, "Bearish Signal", shape.triangledown, location.abovebar, 
+         color.new(color.red, 0), size=size.small)
+
+// Plot stop loss and take profit levels
+plot(long_sl, "Long SL", color=color.new(color.red, 50), style=plot.style_linebr)
+plot(long_tp, "Long TP", color=color.new(color.green, 50), style=plot.style_linebr)
+plot(short_sl, "Short SL", color=color.new(color.red, 50), style=plot.style_linebr)
+plot(short_tp, "Short TP", color=color.new(color.green, 50), style=plot.style_linebr)
+
+// Display Stats Table
+var table stats = table.new(position.top_right, 3, 5, border_width=1)
+if barstate.islast
+    // Headers with light blue background
+    table.cell(stats, 0, 0, "Performance Metrics", bgcolor=color.new(#66B2FF, 20), text_color=color.black)
+    table.cell(stats, 1, 0, "Value", bgcolor=color.new(#66B2FF, 20), text_color=color.black)
+    table.cell(stats, 2, 0, "Percentage", bgcolor=color.new(#66B2FF, 20), text_color=color.black)
+    
+    // Trade Statistics with alternating light backgrounds
+    table.cell(stats, 0, 1, "Total Trades", bgcolor=color.new(#2962FF, 90), text_color=color.black)
+    table.cell(stats, 1, 1, str.tostring(total_trades), bgcolor=color.new(#2962FF, 90), text_color=color.black)
+    table.cell(stats, 2, 1, "100%", bgcolor=color.new(#2962FF, 90), text_color=color.black)
+    
+    table.cell(stats, 0, 2, "Winning Trades", bgcolor=color.new(#00C853, 90), text_color=color.black)
+    table.cell(stats, 1, 2, str.tostring(winning_trades), bgcolor=color.new(#00C853, 90), text_color=color.black)
+    win_rate = total_trades > 0 ? (winning_trades / total_trades) * 100 : 0
+    table.cell(stats, 2, 2, str.tostring(math.round(win_rate, 2)) + "%", bgcolor=color.new(#00C853, 90), text_color=color.black)
+    
+    table.cell(stats, 0, 3, "Losing Trades", bgcolor=color.new(#FF1744, 90), text_color=color.black)
+    table.cell(stats, 1, 3, str.tostring(losing_trades), bgcolor=color.new(#FF1744, 90), text_color=color.black)
+    loss_rate = total_trades > 0 ? (losing_trades / total_trades) * 100 : 0
+    table.cell(stats, 2, 3, str.tostring(math.round(loss_rate, 2)) + "%", bgcolor=color.new(#FF1744, 90), text_color=color.black)
+    
+    // Balance info with gold background
+    table.cell(stats, 0, 4, "Current Balance", bgcolor=color.new(#FFB300, 90), text_color=color.black)
+    table.cell(stats, 1, 4, str.tostring(math.round(current_balance, 2)), bgcolor=color.new(#FFB300, 90), text_color=color.black)
+    balance_change = ((current_balance - initial_capital) / initial_capital) * 100
+    table.cell(stats, 2, 4, str.tostring(math.round(balance_change, 2)) + "%", bgcolor=color.new(#FFB300, 90), text_color=color.black) 
